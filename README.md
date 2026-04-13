@@ -1,35 +1,49 @@
-# ARIADNE Portal Laravel
+# ARTEMIS Portal
 
-Porting del portale ARIADNE/ARTEMIS su Laravel, con backend dati nativo verso OpenSearch, pannello admin Filament e frontend SPA pubblicato dal progetto Laravel.
+ARTEMIS Portal is a Laravel-based port of the ARIADNE Portal.
 
-Il progetto deriva dal portale ARIADNE ed e stato adattato per il contesto ARTEMIS mantenendo una struttura applicativa standard Laravel.
+This repository reimplements the portal stack with standard Laravel components, replacing the former legacy runtime bridge with native Laravel services, OpenSearch integration, a Filament admin panel, and the frontend application published directly from the Laravel project.
 
-## Struttura
+## Project Scope
+
+- Laravel backend for search, aggregations, records, and supporting portal APIs
+- OpenSearch-backed data layer for `Data Resources` and `Heritage Entities`
+- Filament admin panel for curated linking and import workflows
+- Frontend SPA maintained inside the same Laravel repository
+- Docker setup for local development with Laravel and OpenSearch
+
+## Architecture
 
 - `app/Services/PortalSearchService.php`
-  Backend di consultazione nativo Laravel per ricerca, record, aggregazioni, timeline, servizi e publisher.
-- `app/Http/Controllers/Api/PortalApiController.php`
-  Endpoint API esposti al frontend.
-- `app/Http/Controllers/PortalController.php`
-  Catch-all che serve il frontend pubblicato da `public/index.html`.
+  Native Laravel search service for portal data resources.
+- `app/Services/HeritageEntitySearchService.php`
+  Native Laravel search service for heritage entities.
+- `app/Services/PortalResourceImportService.php`
+  Import workflow for ARIADNE data resources into the local portal index.
+- `app/Services/GraphDbHeritageEntityImportService.php`
+  GraphDB-to-OpenSearch importer for heritage entities.
+- `app/Filament/Pages/LinkResources.php`
+  Filament page for linking ARIADNE data resources.
+- `app/Filament/Pages/HeritageEntities.php`
+  Filament page for importing and managing heritage entities.
 - `frontend/`
-  Sorgente della SPA, ora mantenuto dentro questo repository.
+  SPA source code maintained inside this repository.
 - `public/`
-  Bundle frontend pubblicato e asset statici serviti in produzione/locale.
+  Published frontend bundle and static assets served by Laravel.
 - `resources/opensearch/`
-  Mapping e dati statici minimi usati per bootstrap degli indici OpenSearch.
+  OpenSearch mappings and bootstrap data shipped with the project.
 
-## Stato attuale
+## Current Status
 
-- Nessun bridge runtime legacy nel backend attivo.
-- Nessun endpoint `mail` o `updateServices`.
-- Nessun editor admin nel frontend pubblicato.
-- API attive solo per consultazione dati e supporto UI.
-- Pannello admin basato su Filament per linking e gestione delle risorse importate.
+- No legacy runtime bridge is used in the active backend.
+- `Data Resources` and `Heritage Entities` are both handled inside Laravel.
+- `mail` and `updateServices` endpoints are no longer part of the runtime portal.
+- The admin area is implemented with Filament.
+- The published frontend is served by Laravel from `public/index.html`.
 
-## Sviluppo locale
+## Local Development
 
-Installazione dipendenze:
+Install dependencies and bootstrap the application:
 
 ```bash
 composer install
@@ -38,13 +52,26 @@ php artisan key:generate
 php artisan migrate --seed
 ```
 
-Avvio Laravel in locale:
+Run the Laravel application locally:
 
 ```bash
 php artisan serve --host=127.0.0.1 --port=8099
 ```
 
-Build frontend dalla cartella interna del repository:
+Default local URLs:
+
+- Portal: `http://127.0.0.1:8099`
+- Filament admin: `http://127.0.0.1:8099/admin/login`
+- OpenSearch: `http://127.0.0.1:9200`
+
+Default local admin credentials:
+
+- email: `admin@admin.local`
+- password: `admin`
+
+## Frontend Build
+
+Build the frontend from the internal SPA source directory:
 
 ```bash
 cd frontend
@@ -52,48 +79,42 @@ npm install
 npm run build-local
 ```
 
-Dopo la build, pubblicare il contenuto di `frontend/dist/` dentro `public/`.
+Then publish the build output into Laravel `public/`:
+
+```bash
+rsync -a dist/ ../public/
+```
 
 ## Docker
 
-Il repository include un setup Docker standard per:
+The repository includes a Docker setup for:
 
-- Laravel app
+- Laravel application runtime
 - OpenSearch
-- bootstrap automatico degli indici minimi del portale
-- seed automatico dell'utente admin Filament
+- OpenSearch bootstrap
+- seeded Filament admin access
 
-Avvio:
+Start the full stack:
 
 ```bash
 docker compose up --build
 ```
 
-URL:
-
-- portale: `http://localhost:8099`
-- admin Filament: `http://localhost:8099/admin/login`
-- OpenSearch: `http://localhost:9200`
-
-Credenziali admin Docker di default:
-
-- email: `admin@admin.local`
-- password: `admin`
-
-Per fermare lo stack:
+Stop the stack:
 
 ```bash
 docker compose down
 ```
 
-Per azzerare anche i dati OpenSearch:
+Remove containers and persisted volumes:
 
 ```bash
 docker compose down -v
 ```
 
-## Note
+## Notes
 
-- Il bundle frontend corrente viene servito direttamente da `public/index.html`.
-- Le view Blade demo e il bridge legacy runtime sono stati rimossi dal progetto.
-- Il bootstrap Docker non dipende da repository esterni: mapping e dati statici minimi di OpenSearch sono inclusi nel repository Laravel.
+- This repository is the Laravel port of the ARIADNE Portal, adapted for ARTEMIS.
+- New project documentation should be kept in English.
+- New code comments should be written in English.
+- OpenSearch mappings and minimal bootstrap data are stored inside the Laravel repository.
