@@ -22,7 +22,11 @@ export const frontPageLinks = [
 export const mainNavigation = [
   {
     path: '/search',
-    name: 'Catalogue',
+    name: 'Data Resources',
+  },
+  {
+    path: '/heritage-entities',
+    name: 'Heritage Entities',
   },
   {
     path: '/browse',

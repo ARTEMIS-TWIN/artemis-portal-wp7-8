@@ -1,7 +1,13 @@
 <?php
 
+use App\Http\Controllers\Api\HeritageEntityApiController;
 use App\Http\Controllers\Api\PortalApiController;
 use Illuminate\Support\Facades\Route;
+
+Route::get('/heritage-entities/search', [HeritageEntityApiController::class, 'search']);
+Route::get('/heritage-entities/aggregations', [HeritageEntityApiController::class, 'aggregations']);
+Route::get('/heritage-entities/count', [HeritageEntityApiController::class, 'count']);
+Route::get('/heritage-entities/{id}', [HeritageEntityApiController::class, 'show']);
 
 Route::get('/getSubject/{id}', [PortalApiController::class, 'getSubject']);
 Route::get('/search', [PortalApiController::class, 'search']);

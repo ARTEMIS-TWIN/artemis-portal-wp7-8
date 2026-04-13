@@ -4,11 +4,11 @@
     <div class="px-base pb-4x pt-4x lg:pt-8x 2xl:pt-11x relative z-10">
       <div class="frontpage-hero rounded-3xl px-2x py-3x lg:px-4x lg:py-4x">
       <div class="text-center mb-2x">
-        <div class="catalogue-kicker mb-base">Research Catalogue</div>
+        <div class="catalogue-kicker mb-base">Data Resources</div>
         <div class="brand-chip mb-lg">ARTEMIS</div>
         <h1 class="catalogue-heading text-2x lg:text-4x mb-base">Discover heritage data through the ARTEMIS portal.</h1>
         <p class="catalogue-copy max-w-2xl mx-auto text-hg">
-          A refined catalogue for exploring datasets, services, places, periods and publishers with the visual language of ARTEMIS: precise, luminous and research-led.
+          A refined environment for exploring archaeological data resources, services, places, periods and publishers with the visual language of ARTEMIS: precise, luminous and research-led.
         </p>
       </div>
       <div class="flex items-center justify-center relative">

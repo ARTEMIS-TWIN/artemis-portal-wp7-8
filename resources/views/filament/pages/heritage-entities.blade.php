@@ -1,13 +1,13 @@
 <x-filament-panels::page>
-    <form wire:submit="linkResources" class="space-y-6">
+    <form wire:submit="importEntities" class="space-y-6">
         {{ $this->form }}
 
         <div class="flex items-center gap-3">
             <x-filament::button type="submit">
-                Link Data Resources
+                Import from GraphDB
             </x-filament::button>
 
-            <x-filament::button type="button" color="gray" wire:click="syncLinkedResources">
+            <x-filament::button type="button" color="gray" wire:click="syncHeritageEntities">
                 Sync from OpenSearch
             </x-filament::button>
         </div>

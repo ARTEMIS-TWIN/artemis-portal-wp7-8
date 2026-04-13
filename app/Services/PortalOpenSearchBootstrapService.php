@@ -144,6 +144,7 @@ class PortalOpenSearchBootstrapService
     {
         return [
             $this->recordsIndex() => $this->mainMapping(),
+            $this->heritageEntitiesIndex() => $this->heritageEntitiesMapping(),
             $this->subjectsIndex() => $this->loadJson(resource_path('opensearch/aat-concepts-mapping.json')),
             $this->periodsIndex() => $this->periodMapping(),
             $this->aatTermDescendantsIndex() => $this->loadJson(resource_path('opensearch/aat-term-descendants-mapping.json')),
@@ -316,6 +317,115 @@ class PortalOpenSearchBootstrapService
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    private function heritageEntitiesMapping(): array
+    {
+        return [
+            'mappings' => [
+                'dynamic' => 'false',
+                'properties' => [
+                    'uri' => ['type' => 'keyword'],
+                    'label' => ['type' => 'text', 'fields' => ['keyword' => ['type' => 'keyword']]],
+                    'description' => ['type' => 'text'],
+                    'entityType' => ['type' => 'keyword'],
+                    'identifiers' => [
+                        'properties' => [
+                            'uri' => ['type' => 'keyword'],
+                            'type' => ['type' => 'keyword'],
+                            'label' => ['type' => 'text', 'fields' => ['raw' => ['type' => 'keyword']]],
+                            'value' => ['type' => 'text', 'fields' => ['raw' => ['type' => 'keyword']]],
+                        ],
+                    ],
+                    'classificationLabels' => ['type' => 'keyword'],
+                    'classificationUris' => ['type' => 'keyword'],
+                    'classification' => [
+                        'properties' => [
+                            'uri' => ['type' => 'keyword'],
+                            'label' => ['type' => 'text', 'fields' => ['raw' => ['type' => 'keyword']]],
+                        ],
+                    ],
+                    'materials' => ['type' => 'keyword'],
+                    'materialUris' => ['type' => 'keyword'],
+                    'materialDetails' => [
+                        'properties' => [
+                            'uri' => ['type' => 'keyword'],
+                            'label' => ['type' => 'text', 'fields' => ['raw' => ['type' => 'keyword']]],
+                        ],
+                    ],
+                    'periodLabels' => ['type' => 'keyword'],
+                    'periodUris' => ['type' => 'keyword'],
+                    'periods' => [
+                        'properties' => [
+                            'uri' => ['type' => 'keyword'],
+                            'label' => ['type' => 'text', 'fields' => ['raw' => ['type' => 'keyword']]],
+                            'from' => ['type' => 'integer'],
+                            'until' => ['type' => 'integer'],
+                        ],
+                    ],
+                    'minPeriodFrom' => ['type' => 'integer'],
+                    'maxPeriodUntil' => ['type' => 'integer'],
+                    'countryLabel' => ['type' => 'keyword'],
+                    'countryUri' => ['type' => 'keyword'],
+                    'placeLabel' => ['type' => 'keyword'],
+                    'placeUri' => ['type' => 'keyword'],
+                    'ownerLabel' => ['type' => 'keyword'],
+                    'ownerUri' => ['type' => 'keyword'],
+                    'owner' => [
+                        'properties' => [
+                            'uri' => ['type' => 'keyword'],
+                            'label' => ['type' => 'text', 'fields' => ['raw' => ['type' => 'keyword']]],
+                            'homepage' => ['type' => 'keyword'],
+                            'identifier' => ['type' => 'keyword'],
+                        ],
+                    ],
+                    'encounterEvent' => [
+                        'properties' => [
+                            'uri' => ['type' => 'keyword'],
+                            'label' => ['type' => 'text', 'fields' => ['raw' => ['type' => 'keyword']]],
+                            'actorUri' => ['type' => 'keyword'],
+                            'actorLabel' => ['type' => 'text', 'fields' => ['raw' => ['type' => 'keyword']]],
+                            'timeSpanLabel' => ['type' => 'keyword'],
+                        ],
+                    ],
+                    'sameAs' => ['type' => 'keyword'],
+                    'hasWikidata' => ['type' => 'boolean'],
+                    'visualRepresentations' => [
+                        'properties' => [
+                            'uri' => ['type' => 'keyword'],
+                            'label' => ['type' => 'text', 'fields' => ['raw' => ['type' => 'keyword']]],
+                        ],
+                    ],
+                    'hasImage' => ['type' => 'boolean'],
+                    'visualRepresentationStatus' => ['type' => 'keyword'],
+                    'relatedDataResources' => [
+                        'properties' => [
+                            'id' => ['type' => 'keyword'],
+                            'uri' => ['type' => 'keyword'],
+                            'title' => ['type' => 'text', 'fields' => ['raw' => ['type' => 'keyword']]],
+                            'resourceType' => ['type' => 'keyword'],
+                        ],
+                    ],
+                    'hasRelatedDataResources' => ['type' => 'boolean'],
+                    'relatedDataResourceStatus' => ['type' => 'keyword'],
+                    'sourceGraph' => ['type' => 'keyword'],
+                    'location' => [
+                        'properties' => [
+                            'label' => ['type' => 'text', 'fields' => ['raw' => ['type' => 'keyword']]],
+                            'countryLabel' => ['type' => 'keyword'],
+                            'countryUri' => ['type' => 'keyword'],
+                            'placeUri' => ['type' => 'keyword'],
+                            'lat' => ['type' => 'float'],
+                            'lon' => ['type' => 'float'],
+                            'geopoint' => ['type' => 'geo_point'],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+    }
+
     private function opensearchBaseUrl(): string
     {
         return rtrim((string) env('OPENSEARCH_URL', 'http://127.0.0.1:9200'), '/');
@@ -324,6 +434,11 @@ class PortalOpenSearchBootstrapService
     private function recordsIndex(): string
     {
         return (string) env('OPENSEARCH_RECORDS_INDEX', 'ariadne_portal');
+    }
+
+    private function heritageEntitiesIndex(): string
+    {
+        return (string) env('OPENSEARCH_HERITAGE_ENTITIES_INDEX', 'artemis_heritage_entities');
     }
 
     private function subjectsIndex(): string

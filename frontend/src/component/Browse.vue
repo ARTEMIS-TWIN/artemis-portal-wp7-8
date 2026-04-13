@@ -1,7 +1,7 @@
 <template>
 	<div class="pt-3x px-base max-w-screen-xl mx-auto text-mmd">
     <h1 class="text-2xl mb-xl">
-      Browse the Catalogue
+      Browse Data Resources
     </h1>
 
     <div class="flex flex-col md:flex-row pt-xs text-mmd">

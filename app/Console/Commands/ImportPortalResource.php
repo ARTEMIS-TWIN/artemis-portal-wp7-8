@@ -9,9 +9,9 @@ use Throwable;
 class ImportPortalResource extends Command
 {
     protected $signature = 'portal:import-resource
-        {reference* : One or more ARIADNE portal resource URLs or raw IDs}';
+        {reference* : One or more ARIADNE portal URLs, AO-Cat URIs, or raw IDs}';
 
-    protected $description = 'Import one or more ARIADNE portal resources into the local OpenSearch index.';
+    protected $description = 'Import one or more ARIADNE data resources into the local OpenSearch index.';
 
     public function handle(PortalResourceImportService $importer): int
     {

@@ -2,11 +2,12 @@
 
 namespace App\Filament\Pages;
 
-use App\Models\ImportedPortalResource;
-use App\Services\PortalResourceImportService;
+use App\Models\ImportedHeritageEntity;
+use App\Services\GraphDbHeritageEntityImportService;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
@@ -21,27 +22,28 @@ use Filament\Tables\Table;
 use Illuminate\Support\Collection;
 use Throwable;
 
-class LinkResources extends Page implements HasForms, HasTable
+class HeritageEntities extends Page implements HasForms, HasTable
 {
     use InteractsWithForms;
     use InteractsWithTable;
 
-    protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-link';
+    protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-building-library';
 
-    protected static ?string $navigationLabel = 'Link Data Resources';
+    protected static ?string $navigationLabel = 'Heritage Entities';
 
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = 2;
 
-    protected ?string $heading = 'Link Data Resources';
+    protected ?string $heading = 'Heritage Entities';
 
-    protected string $view = 'filament.pages.link-resources';
+    protected string $view = 'filament.pages.heritage-entities';
 
     public ?array $data = [];
 
     public function mount(): void
     {
         $this->form->fill([
-            'references' => '',
+            'graph_uri' => '',
+            'entity_uris' => '',
         ]);
 
         if (app()->runningUnitTests()) {
@@ -52,7 +54,7 @@ class LinkResources extends Page implements HasForms, HasTable
             $this->syncProjection(notify: false);
         } catch (Throwable $exception) {
             Notification::make()
-                ->title('Linked resources could not be synchronized')
+                ->title('Heritage entities could not be synchronized')
                 ->body($exception->getMessage())
                 ->danger()
                 ->send();
@@ -64,41 +66,47 @@ class LinkResources extends Page implements HasForms, HasTable
         return $schema
             ->statePath('data')
             ->components([
-                Section::make('Portal Resources')
-                    ->description('Paste one or more ARIADNE portal URLs, AO-Cat resource URIs, collection URIs, or raw IDs, one per line.')
+                Section::make('GraphDB Import')
+                    ->description('Import one or more heritage entities from an ARTEMIS GraphDB named graph. Leave entity URIs empty to import all tangible heritage entities discovered in the graph.')
                     ->schema([
-                        Textarea::make('references')
-                            ->label('Data resources to link')
-                            ->rows(10)
+                        TextInput::make('graph_uri')
+                            ->label('Named graph URI')
                             ->required()
-                            ->placeholder("https://portal.ariadne-infrastructure.eu/resource/...\nhttps://ariadne-infrastructure.eu/aocat/Collection/AMCR/4999D660-D1DB-360B-819F-DC15E3C79867\nraw-record-id"),
+                            ->placeholder('https://artemis-twin.eu/digitaltwins/stonehenge')
+                            ->url(),
+                        Textarea::make('entity_uris')
+                            ->label('Entity URIs')
+                            ->rows(8)
+                            ->placeholder("https://artemis-twin.eu/entity/Stonehenge\nhttps://artemis-twin.eu/entity/AnotherEntity"),
                     ]),
             ]);
     }
 
-    public function linkResources(): void
+    public function importEntities(): void
     {
         $state = $this->form->getState();
-        $references = $this->parseReferences((string) ($state['references'] ?? ''));
+        $graphUri = trim((string) ($state['graph_uri'] ?? ''));
+        $entityUris = $this->parseLines((string) ($state['entity_uris'] ?? ''));
 
-        if ($references === []) {
+        if ($graphUri === '') {
             Notification::make()
-                ->title('No data resources provided')
-                ->body('Paste at least one ARIADNE portal URL, AO-Cat URI, or raw record ID.')
+                ->title('No graph URI provided')
+                ->body('Provide a named graph URI before importing heritage entities.')
                 ->danger()
                 ->send();
 
             return;
         }
 
-        $importer = app(PortalResourceImportService::class);
+        $importer = app(GraphDbHeritageEntityImportService::class);
         $successes = 0;
         $failures = 0;
         $importedByOverrides = [];
 
-        foreach ($references as $reference) {
-            try {
-                $result = $importer->import($reference);
+        try {
+            $results = $importer->importGraph($graphUri, $entityUris);
+
+            foreach ($results as $result) {
                 $recordId = $result['id'] ?? null;
 
                 if (filled($recordId)) {
@@ -106,28 +114,36 @@ class LinkResources extends Page implements HasForms, HasTable
                 }
 
                 $successes++;
-            } catch (Throwable $exception) {
-                $failures++;
             }
+        } catch (Throwable $exception) {
+            $failures++;
+
+            Notification::make()
+                ->title('Heritage entity import failed')
+                ->body($exception->getMessage())
+                ->danger()
+                ->send();
         }
 
         if ($successes > 0) {
             $this->syncProjection($importedByOverrides, notify: false);
+            $this->form->fill([
+                'graph_uri' => $graphUri,
+                'entity_uris' => '',
+            ]);
+            $this->resetTable();
         }
 
-        $this->form->fill([
-            'references' => '',
-        ]);
-        $this->resetTable();
-
-        Notification::make()
-            ->title('Data resource linking completed')
-            ->body("Imported {$successes} data resource(s), failed {$failures}.")
-            ->color($failures > 0 ? 'warning' : 'success')
-            ->send();
+        if ($successes > 0 || $failures > 0) {
+            Notification::make()
+                ->title('Heritage import completed')
+                ->body("Imported {$successes} heritage entit".($successes === 1 ? 'y' : 'ies').", failed {$failures}.")
+                ->color($failures > 0 ? 'warning' : 'success')
+                ->send();
+        }
     }
 
-    public function syncLinkedResources(): void
+    public function syncHeritageEntities(): void
     {
         try {
             $count = $this->syncProjection(notify: false);
@@ -135,8 +151,8 @@ class LinkResources extends Page implements HasForms, HasTable
             $this->resetTable();
 
             Notification::make()
-                ->title('Linked data resources synchronized')
-                ->body("The portal currently exposes {$count} linked data resource(s) imported from ARIADNE.")
+                ->title('Heritage entities synchronized')
+                ->body("The heritage index currently exposes {$count} linked entit".($count === 1 ? 'y' : 'ies').'.')
                 ->success()
                 ->send();
         } catch (Throwable $exception) {
@@ -151,14 +167,14 @@ class LinkResources extends Page implements HasForms, HasTable
     public function table(Table $table): Table
     {
         return $table
-            ->query(ImportedPortalResource::query()->with('user'))
+            ->query(ImportedHeritageEntity::query()->with('user'))
             ->defaultSort('imported_at', 'desc')
             ->headerActions([
                 Action::make('sync')
                     ->label('Sync from OpenSearch')
                     ->icon('heroicon-o-arrow-path')
                     ->color('gray')
-                    ->action(fn () => $this->syncLinkedResources()),
+                    ->action(fn () => $this->syncHeritageEntities()),
             ])
             ->columns([
                 TextColumn::make('status')
@@ -167,21 +183,34 @@ class LinkResources extends Page implements HasForms, HasTable
                         'linked' => 'success',
                         default => 'gray',
                     }),
-                TextColumn::make('title')
+                TextColumn::make('label')
                     ->searchable()
                     ->wrap()
                     ->limit(80),
-                TextColumn::make('resource_type')
+                TextColumn::make('entity_type')
                     ->label('Type')
+                    ->searchable()
+                    ->toggleable(),
+                TextColumn::make('country_label')
+                    ->label('Country')
+                    ->toggleable(),
+                TextColumn::make('place_label')
+                    ->label('Place')
                     ->toggleable(),
                 TextColumn::make('record_id')
                     ->label('Record ID')
                     ->searchable()
                     ->copyable()
                     ->toggleable(),
-                TextColumn::make('source_reference')
-                    ->label('Portal URL')
-                    ->url(fn (ImportedPortalResource $record): ?string => $record->source_reference)
+                TextColumn::make('entity_uri')
+                    ->label('Entity URI')
+                    ->url(fn (ImportedHeritageEntity $record): ?string => $record->entity_uri)
+                    ->openUrlInNewTab()
+                    ->wrap()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('graph_uri')
+                    ->label('Source graph')
+                    ->url(fn (ImportedHeritageEntity $record): ?string => $record->graph_uri)
                     ->openUrlInNewTab()
                     ->wrap()
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -189,7 +218,7 @@ class LinkResources extends Page implements HasForms, HasTable
                     ->label('Admin')
                     ->toggleable(),
                 TextColumn::make('imported_at')
-                    ->label('Linked')
+                    ->label('Imported')
                     ->since()
                     ->sortable(),
                 TextColumn::make('error_message')
@@ -203,9 +232,9 @@ class LinkResources extends Page implements HasForms, HasTable
                     ->icon('heroicon-o-trash')
                     ->color('danger')
                     ->requiresConfirmation()
-                    ->modalHeading('Remove linked resource')
-                    ->modalDescription('This removes the selected resource from the local portal index.')
-                    ->action(function (ImportedPortalResource $record): void {
+                    ->modalHeading('Remove linked heritage entity')
+                    ->modalDescription('This removes the selected heritage entity from the local portal index.')
+                    ->action(function (ImportedHeritageEntity $record): void {
                         $this->removeLinks(collect([$record]));
                     }),
             ])
@@ -215,25 +244,25 @@ class LinkResources extends Page implements HasForms, HasTable
                     ->icon('heroicon-o-trash')
                     ->color('danger')
                     ->requiresConfirmation()
-                    ->modalHeading('Remove selected linked resources')
-                    ->modalDescription('This removes the selected resources from the local portal index.')
+                    ->modalHeading('Remove selected heritage entities')
+                    ->modalDescription('This removes the selected heritage entities from the local portal index.')
                     ->action(function (Collection $records): void {
                         $this->removeLinks($records);
                     }),
             ])
             ->recordUrl(null)
-            ->emptyStateHeading('No linked data resources yet')
+            ->emptyStateHeading('No heritage entities yet')
             ->paginated([10, 25, 50]);
     }
 
     /**
      * @return list<string>
      */
-    protected function parseReferences(string $references): array
+    protected function parseLines(string $value): array
     {
         return array_values(array_unique(array_filter(array_map(
-            static fn (string $value): string => trim($value),
-            preg_split('/[\r\n,;]+/', $references) ?: [],
+            static fn (string $item): string => trim($item),
+            preg_split('/[\r\n,;]+/', $value) ?: [],
         ))));
     }
 
@@ -242,12 +271,12 @@ class LinkResources extends Page implements HasForms, HasTable
      */
     protected function syncProjection(array $importedByOverrides = [], bool $notify = true): int
     {
-        $count = app(PortalResourceImportService::class)->syncProjection($importedByOverrides);
+        $count = app(GraphDbHeritageEntityImportService::class)->syncProjection($importedByOverrides);
 
         if ($notify) {
             Notification::make()
-                ->title('Linked data resources synchronized')
-                ->body("The portal currently exposes {$count} linked data resource(s) imported from ARIADNE.")
+                ->title('Heritage entities synchronized')
+                ->body("The heritage index currently exposes {$count} linked entit".($count === 1 ? 'y' : 'ies').'.')
                 ->success()
                 ->send();
         }
@@ -257,11 +286,11 @@ class LinkResources extends Page implements HasForms, HasTable
 
     protected function removeLinks(Collection $records): void
     {
-        $importer = app(PortalResourceImportService::class);
+        $importer = app(GraphDbHeritageEntityImportService::class);
         $removed = 0;
 
         foreach ($records as $record) {
-            if (! $record instanceof ImportedPortalResource) {
+            if (! $record instanceof ImportedHeritageEntity) {
                 continue;
             }
 
@@ -273,8 +302,8 @@ class LinkResources extends Page implements HasForms, HasTable
         $this->resetTable();
 
         Notification::make()
-            ->title('Linked data resources updated')
-            ->body("Removed {$removed} data resource(s). {$remaining} linked data resource(s) remain in the portal.")
+            ->title('Heritage entities updated')
+            ->body("Removed {$removed} heritage entit".($removed === 1 ? 'y' : 'ies').". {$remaining} linked entit".($remaining === 1 ? 'y remains' : 'ies remain')." in the heritage index.")
             ->success()
             ->send();
     }

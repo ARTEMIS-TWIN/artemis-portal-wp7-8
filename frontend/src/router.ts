@@ -17,6 +17,8 @@ import Services from './component/Services.vue';
 import Theme from './component/Theme.vue';
 import Infographic from './component/Infographic.vue';
 import Guide from './component/Guide.vue';
+import HeritageEntities from './component/HeritageEntities.vue';
+import HeritageEntityDetail from './component/HeritageEntityDetail.vue';
 //import MaintenancePage from './component/MaintenancePage.vue';
 
 /**
@@ -35,13 +37,30 @@ const router = createRouter({
       path: '/',
       component: Result,
       meta: {
-        title: 'Catalogue',
-        description: 'Search and explore the ARTEMIS data infrastructure catalogue.',
+        title: 'Data Resources',
+        description: 'Search and explore the ARTEMIS data resources.',
       }
     },
     {
       path: '/search',
       component: Result
+    },
+    {
+      path: '/heritage-entities',
+      component: HeritageEntities,
+      meta: {
+        title: 'Heritage Entities',
+        description: 'Search and explore heritage entities.',
+      }
+    },
+    {
+      path: '/heritage-entities/:id',
+      props: true,
+      component: HeritageEntityDetail,
+      meta: {
+        title: 'Heritage Entity',
+        description: 'Heritage entity detail',
+      }
     },
     {
       path: '/resource/:id',

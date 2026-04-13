@@ -87,7 +87,7 @@
         <p>
           <b-link :to="utils.paramsToString('/search', { derivedSubject: subject.prefLabel })">
             <i class="fas fa-search mr-sm"></i>
-            Show {{ result?.total?.value || 0 }} results in catalogue
+            Show {{ result?.total?.value || 0 }} results in data resources
           </b-link>
         </p>
 

@@ -112,6 +112,10 @@ class PortalResourceImportService
             return $matches[1];
         }
 
+        if (filter_var($reference, FILTER_VALIDATE_URL) && str_contains($reference, '/aocat/')) {
+            return hash('sha256', $reference);
+        }
+
         return $reference;
     }
 

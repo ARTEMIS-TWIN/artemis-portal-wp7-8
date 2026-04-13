@@ -15,7 +15,7 @@
       <section class="result-panel">
         <div class="result-layout flex flex-col">
           <div class="result-toolbar result-toolbar--aligned flex flex-col gap-4">
-            <h2 class="catalogue-heading text-2xl">Results</h2>
+            <h2 class="catalogue-heading text-2xl">Data Resources</h2>
             <result-info />
             <div class="result-toolbar__row flex flex-wrap items-center justify-between gap-4">
               <div class="result-toolbar__controls flex flex-wrap items-center">
@@ -64,10 +64,10 @@ const window = $computed(() => generalModule.getWindow);
 const params = $computed(() => searchModule.getParams);
 
 const setMeta = () => {
-  let title = 'Search';
+  let title = 'Data Resources';
 
   if (params.q) {
-    title = `Search results: ${ params.q }`;
+    title = `Data resources: ${ params.q }`;
   }
   if (parseInt(params.page) > 1) {
     title += ` (page ${ params.page })`;

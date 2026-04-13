@@ -13,7 +13,7 @@
     <!-- main content -->
     <section class="lg:w-2/3 lg:pl-lg block cloud-wrapper">
       <h2 class="text-2xl">Browse what</h2>
-      <p class="mb-lg">Click on a word in the word cloud to make a search in the catalogue.</p>
+      <p class="mb-lg">Click on a word in the word cloud to make a search in Data Resources.</p>
 
       <p v-if="(!wordCloud && !isLoading) || errorText" class="text-red">
         {{ errorText || 'Internal error. Could not load cloud.' }}

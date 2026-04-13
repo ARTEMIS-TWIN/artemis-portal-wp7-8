@@ -260,6 +260,42 @@ input::placeholder, textarea::placeholder {
   margin: 0 0 0.9rem;
 }
 
+.heritage-authority-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 2.15rem;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid rgba(11, 28, 50, 0.14);
+  background: #f6f8fc;
+  color: var(--brand-text);
+  line-height: 1.2;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.heritage-authority-chip--linked:hover {
+  background: #eef3fb;
+  border-color: rgba(11, 28, 50, 0.24);
+}
+
+.heritage-authority-chip__label {
+  font-weight: 600;
+}
+
+.heritage-authority-chip__meta {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #5d6a7b;
+}
+
+.heritage-authority-chip__icon {
+  font-size: 0.72rem;
+  color: #5d6a7b;
+}
+
 .app-section-title {
   font-family: var(--content-font);
   font-weight: 700;
@@ -800,6 +836,19 @@ input::placeholder, textarea::placeholder {
 .resource-shell h3 {
   font-family: var(--content-font);
   letter-spacing: -0.018em;
+}
+
+.heritage-entity__figure {
+  margin: 0;
+}
+
+.heritage-entity__image {
+  width: 100%;
+  max-height: 30rem;
+  object-fit: cover;
+  border-radius: 1rem;
+  border: 1px solid rgba(11, 28, 50, 0.12);
+  box-shadow: 0 14px 34px rgba(10, 31, 58, 0.08);
 }
 
 .resource-shell h1 {

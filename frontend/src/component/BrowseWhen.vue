@@ -13,7 +13,7 @@
     <!-- main content -->
     <section class="lg:w-2/3 lg:pl-lg">
       <h2 class="text-2xl">Browse when</h2>
-      <p class="mb-lg">Scroll on the timeline to zoom. Drag to pan. Hold shift and drag a selection to apply a time range. Click "Display as search result" to search the time range in the catalogue.</p>
+      <p class="mb-lg">Scroll on the timeline to zoom. Drag to pan. Hold shift and drag a selection to apply a time range. Click "Display as search result" to search the time range in Data Resources.</p>
 
       <p v-if="result.error" class="text-red">
         {{ result.error }}
