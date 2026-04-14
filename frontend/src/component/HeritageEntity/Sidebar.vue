@@ -45,6 +45,7 @@
           {{ resource.title || resource.uri }}
         </b-link>
         <p v-if="resource.resourceType" class="text-md mt-xs">{{ resource.resourceType }}</p>
+        <strong class="block mt-sm mb-xs">Available on ARIADNE</strong>
         <a :href="externalResourceHref(resource.uri)" target="_blank" class="text-blue hover:underline break-word text-md">
           {{ resource.uri }}
         </a>
