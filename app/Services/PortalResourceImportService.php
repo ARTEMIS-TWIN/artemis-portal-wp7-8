@@ -197,7 +197,7 @@ class PortalResourceImportService
                 'query' => [
                     'bool' => [
                         'filter' => [
-                            ['term' => ['importSource' => 'ariadne-portal-api']],
+                            ['match' => ['importSource' => 'ariadne-portal-api']],
                         ],
                     ],
                 ],

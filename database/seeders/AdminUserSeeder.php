@@ -13,10 +13,10 @@ class AdminUserSeeder extends Seeder
     public function run(): void
     {
         User::updateOrCreate(
-            ['email' => env('FILAMENT_ADMIN_EMAIL', 'admin@ariadne.local')],
+            ['email' => env('FILAMENT_ADMIN_EMAIL', 'admin@artemis.local')],
             [
                 'name' => env('FILAMENT_ADMIN_NAME', 'ARIADNE Admin'),
-                'password' => env('FILAMENT_ADMIN_PASSWORD', 'ChangeMeNow!123'),
+                'password' => env('FILAMENT_ADMIN_PASSWORD', 'ChangeMeNow!'),
                 'is_admin' => true,
             ],
         );
