@@ -265,6 +265,7 @@ input::placeholder, textarea::placeholder {
   align-items: center;
   gap: 0.45rem;
   min-height: 2.15rem;
+  max-width: 100%;
   padding: 0.35rem 0.7rem;
   border-radius: 999px;
   border: 1px solid rgba(11, 28, 50, 0.14);
@@ -280,10 +281,17 @@ input::placeholder, textarea::placeholder {
 }
 
 .heritage-authority-chip__label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-weight: 600;
 }
 
 .heritage-authority-chip__meta {
+  flex-shrink: 0;
+  white-space: nowrap;
   font-size: 0.78rem;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -292,8 +300,34 @@ input::placeholder, textarea::placeholder {
 }
 
 .heritage-authority-chip__icon {
+  flex-shrink: 0;
   font-size: 0.72rem;
   color: #5d6a7b;
+}
+
+.spatial-context-link {
+  @apply inline-flex items-center text-blue font-semibold transition-colors duration-300 hover:text-darkGray hover:underline;
+  text-decoration-color: rgba(31, 82, 134, 0.35);
+  text-underline-offset: 0.18em;
+  text-decoration-thickness: 1px;
+}
+
+.spatial-context-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 0.6rem;
+  row-gap: 0.35rem;
+  line-height: 1.35;
+}
+
+.spatial-context-entry + .spatial-context-entry {
+  margin-top: 0.35rem;
+}
+
+.spatial-context-comma {
+  color: #667382;
+  margin-left: -0.35rem;
 }
 
 .app-section-title {
@@ -858,6 +892,40 @@ input::placeholder, textarea::placeholder {
 .resource-shell h2,
 .resource-shell h3 {
   font-weight: 600;
+}
+
+.detail-page__backlink {
+  margin-bottom: 0.5rem;
+}
+
+.detail-page__map {
+  margin-bottom: 0;
+}
+
+.detail-page__breadcrumbs {
+  margin-bottom: 0;
+}
+
+.detail-page__shell {
+  overflow: hidden;
+}
+
+.detail-page__title-block {
+  margin-bottom: 0.35rem;
+}
+
+.detail-page__title-row {
+  align-items: flex-start;
+}
+
+.detail-page__kicker {
+  color: var(--brand-muted);
+  letter-spacing: 0.12em;
+  font-weight: 700;
+}
+
+.detail-page__description {
+  margin-bottom: 0.35rem;
 }
 
 .result-info {

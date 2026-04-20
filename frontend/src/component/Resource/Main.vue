@@ -7,6 +7,36 @@
       />
     </section>
 
+    <section
+      v-if="resource.spatial?.length || resource.country?.length"
+      :class="sectionClass"
+    >
+      <resource-main-spatial-context
+        :itemClass="itemClass"
+        :bClass="bClass"
+      />
+    </section>
+
+    <section
+      v-if="resource.spatial?.length"
+      :class="sectionClass"
+    >
+      <resource-main-coordinates
+        :itemClass="itemClass"
+        :bClass="bClass"
+      />
+    </section>
+
+    <section
+      v-if="resource.temporal?.length"
+      :class="sectionClass"
+    >
+      <resource-main-temporal-context
+        :itemClass="itemClass"
+        :bClass="bClass"
+      />
+    </section>
+
     <section :class="sectionClass">
       <resource-main-responsible
         :itemClass="itemClass"
@@ -80,6 +110,9 @@ import ResourceMainVideo from './Main/Video.vue';
 import ResourceMainImages from './Main/Images.vue';
 import ResourceMainIiifs from './Main/Iiifs.vue';
 import ResourceMainObjects from './Main/Objects.vue';
+import ResourceMainSpatialContext from './Main/SpatialContext.vue';
+import ResourceMainTemporalContext from './Main/TemporalContext.vue';
+import ResourceMainCoordinates from './Main/Coordinates.vue';
 import utils from '@/utils/utils';
 
 const resource = $computed(() => resourceModule.getResource);

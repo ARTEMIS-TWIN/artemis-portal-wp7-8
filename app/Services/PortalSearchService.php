@@ -408,6 +408,7 @@ class PortalSearchService
         $source['collection'] = $this->getCollectionItems($source);
         $source['partOf'] = $this->getItemsPartOf($source);
         $source['isAboutResource'] = $this->getIsAboutResources($source);
+        $source['relatedHeritageEntities'] = $this->getRelatedHeritageEntities($source, $id);
         $source['periodo'] = $this->getPeriodsForRecord($source);
 
         return PortalSearchUtils::splitLanguages($source, $this->defaultLanguage());
@@ -1538,15 +1539,22 @@ class PortalSearchService
         }
 
         $result = $this->searchRecords([
-            '_source' => ['title'],
+            '_source' => ['title', 'resourceType', 'landingPage', 'identifier'],
             'query' => ['bool' => ['should' => $parts]],
         ]);
 
         $resources = [];
 
         foreach (Arr::get($result, 'hits.hits', []) as $hit) {
+            $source = Arr::get($hit, '_source', []);
             $normalized = PortalSearchUtils::splitLanguages(Arr::get($hit, '_source', []), $this->defaultLanguage());
-            $resources[] = ['id' => $hit['_id'], 'title' => $normalized['title'] ?? ''];
+            $resources[] = [
+                'id' => $hit['_id'],
+                'title' => $normalized['title'] ?? [],
+                'resourceType' => Arr::get($source, 'resourceType'),
+                'landingPage' => Arr::get($source, 'landingPage'),
+                'identifier' => Arr::get($source, 'identifier'),
+            ];
         }
 
         return $resources;
@@ -1575,6 +1583,59 @@ class PortalSearchService
             'total' => (int) Arr::get($result, 'hits.total.value', 0),
             'hits' => $hits,
         ];
+    }
+
+    private function getRelatedHeritageEntities(array $record, string $recordId): array
+    {
+        $identifier = trim((string) ($record['identifier'] ?? ''));
+
+        $should = [
+            ['term' => ['relatedDataResources.id' => $recordId]],
+        ];
+
+        if ($identifier !== '') {
+            $should[] = ['term' => ['relatedDataResources.uri' => $identifier]];
+        }
+
+        try {
+            $result = $this->request('POST', '/'.$this->heritageEntitiesIndex().'/_search', [
+                '_source' => ['label', 'entityType', 'uri', 'sourceGraph'],
+                'size' => 20,
+                'sort' => [['label.keyword' => ['order' => 'asc']]],
+                'query' => [
+                    'bool' => [
+                        'should' => $should,
+                        'minimum_should_match' => 1,
+                    ],
+                ],
+            ]);
+        } catch (RuntimeException) {
+            return [];
+        }
+
+        $entities = [];
+        $seen = [];
+
+        foreach (Arr::get($result, 'hits.hits', []) as $hit) {
+            $entityId = (string) ($hit['_id'] ?? '');
+
+            if ($entityId === '' || isset($seen[$entityId])) {
+                continue;
+            }
+
+            $seen[$entityId] = true;
+            $source = Arr::get($hit, '_source', []);
+
+            $entities[] = [
+                'id' => $entityId,
+                'label' => trim((string) ($source['label'] ?? '')),
+                'entityType' => trim((string) ($source['entityType'] ?? '')),
+                'uri' => trim((string) ($source['uri'] ?? '')),
+                'sourceGraph' => trim((string) ($source['sourceGraph'] ?? '')),
+            ];
+        }
+
+        return $entities;
     }
 
     private function getSubSubjects(string $id): array
@@ -1734,6 +1795,11 @@ class PortalSearchService
     private function publishersIndex(): string
     {
         return (string) ($this->publishersIndex ?? env('OPENSEARCH_PUBLISHERS_INDEX', 'ariadne_publishers'));
+    }
+
+    private function heritageEntitiesIndex(): string
+    {
+        return (string) env('OPENSEARCH_HERITAGE_ENTITIES_INDEX', 'artemis_heritage_entities');
     }
 
     private function aatTermDescendantsIndex(): string

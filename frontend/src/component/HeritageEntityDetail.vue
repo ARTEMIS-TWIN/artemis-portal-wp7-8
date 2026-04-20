@@ -13,8 +13,8 @@
       <p class="text-red text-mmd text-center">{{ error }}</p>
     </div>
 
-    <div v-else-if="entity" class="text-mmd">
-      <div>
+    <div v-else-if="entity" class="text-mmd detail-page">
+      <div class="detail-page__backlink">
         <b-link
           to="/heritage-entities"
           class="p-md app-panel text-blue border-b-base border-gray hover:bg-white transition-bg duration-300 w-full block text-center rounded-2xl max-w-screen-xl mx-auto"
@@ -24,17 +24,17 @@
         </b-link>
       </div>
 
-      <div>
+      <div class="detail-page__map">
         <heritage-entity-map v-if="hasMapData" :entity="entity" />
         <div v-else class="pb-md"></div>
       </div>
 
-      <article class="py-xl px-base mx-auto max-w-screen-xl lg:flex resource-shell">
-        <div class="pt-xl w-full lg:w-2/3 lg:pr-2x px-base">
-          <div class="mt-xs">
-            <div class="flex justify-between items-start gap-base">
+      <article class="py-xl px-base mx-auto max-w-screen-xl lg:flex resource-shell detail-page__shell">
+        <div class="pt-xl w-full lg:w-2/3 lg:pr-2x px-base detail-page__main">
+          <div class="mt-xs detail-page__title-block">
+            <div class="flex justify-between items-start gap-base detail-page__title-row">
               <div>
-                <p class="text-sm uppercase tracking-wide text-midGray mb-sm">Heritage Entity</p>
+                <p class="text-sm uppercase tracking-wide text-midGray mb-sm detail-page__kicker">Heritage Entity</p>
                 <h1 class="text-2xl">{{ entity.label || 'Untitled entity' }}</h1>
                 <p v-if="entity.entityType" class="mt-sm">
                   <strong class="mr-sm">Entity type</strong>{{ entity.entityType }}
@@ -43,7 +43,7 @@
             </div>
           </div>
 
-          <div v-if="entity.description" class="mt-2x pt-xs mb-3x lg:mb-2x">
+          <div v-if="entity.description" class="mt-2x pt-xs mb-3x lg:mb-2x detail-page__description">
             <h3 class="text-lg font-bold mb-md">
               <i class="fas fa-info-circle mr-sm" />
               Description
@@ -54,8 +54,8 @@
           <heritage-entity-main class="mt-lg" :entity="entity" />
         </div>
 
-        <div class="w-full lg:w-1/3 pt-xl lg:pl-2x lg:border-l-base border-gray px-base pb-xl">
-          <heritage-entity-sidebar :entity="entity" />
+        <div class="w-full lg:w-1/3 pt-xl lg:pl-2x lg:border-l-base border-gray px-base pb-xl detail-page__aside">
+          <heritage-entity-sidebar :entity="entity" :entityId="currentEntityId" />
         </div>
       </article>
     </div>
@@ -90,6 +90,7 @@ const hasMapData = $computed(() => {
     && entity?.location?.lon !== undefined
     && entity?.location?.lon !== null;
 });
+const currentEntityId = $computed(() => String(route.params.id || ''));
 
 const loadEntity = async (id: string) => {
   loading = true;

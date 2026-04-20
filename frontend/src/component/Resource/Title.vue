@@ -1,13 +1,16 @@
 <template>
-  <div>
-    <div class="flex justify-between items-center">
-      <!-- main title -->
+  <div class="detail-page__title-block">
+    <div class="flex justify-between items-start gap-base detail-page__title-row">
       <div>
+        <p class="text-sm uppercase tracking-wide text-midGray mb-sm detail-page__kicker">Data Resource</p>
         <h1 class="text-2xl">{{ mainTitle }}</h1>
+        <p v-if="resourceType" class="mt-sm">
+          <strong class="mr-sm">Resource type</strong>{{ resourceType }}
+        </p>
       </div>
 
       <!-- cts icon -->
-      <div class="ml-base">
+      <div class="ml-base shrink-0">
         <help-tooltip
           v-if="isCtsCertified"
           title="CoreTrustSeal Certified"
@@ -45,10 +48,15 @@ import { $computed } from 'vue/macros';
 import { generalModule, resourceModule } from "@/store/modules";
 import HelpTooltip from '@/component/Help/Tooltip.vue';
 import MultiLangInfo from './MultiLangInfo.vue';
+import utils from '@/utils/utils';
 
 const resource = $computed(() => resourceModule.getResource);
 const mainTitle = $computed(() => resourceModule.getMainTitle(resource));
 const isCtsCertified = $computed(() => resourceModule.getIsCtsCertified(resource));
 const nativeTitle = $computed(() => resourceModule.getNativeTitle(resource));
 const nonNativeTitles = $computed(() => resourceModule.getNonNativeTitles(resource));
+const resourceType = $computed(() => {
+  const typeName = String(resource?.resourceType ?? '').trim();
+  return typeName ? utils.sentenceCase(typeName.replace(/[-_]/g, ' ')) : '';
+});
 </script>

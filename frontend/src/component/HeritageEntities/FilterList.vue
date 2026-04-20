@@ -12,6 +12,8 @@
       Clear filters
     </button>
 
+    <heritage-entities-map class="mb-lg" />
+
     <heritage-entity-aggregation
       v-for="(item, id) in sortedAggs"
       :key="id"
@@ -25,6 +27,7 @@
 import { $computed } from 'vue/macros';
 import { heritageEntityAggregationModule, heritageEntitySearchModule } from '@/store/modules';
 import HeritageEntityAggregation from './Aggregation.vue';
+import HeritageEntitiesMap from './Map.vue';
 import HeritageEntitySearchInput from './SearchInput.vue';
 
 const sortedAggs = $computed(() => heritageEntityAggregationModule.getSorted);
