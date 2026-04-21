@@ -8,6 +8,7 @@ import Browse from './component/Browse.vue';
 import BrowseWhat from './component/BrowseWhat.vue';
 import BrowseWhen from './component/BrowseWhen.vue';
 import BrowseWhere from './component/BrowseWhere.vue';
+import ArtemisIA from './component/ArtemisIA.vue';
 import NotFound from './component/NotFound.vue';
 import Resource from './component/Resource.vue';
 import Subject from './component/Subject.vue';
@@ -91,6 +92,14 @@ const router = createRouter({
       meta: {
         title: 'About',
         description: 'About page'
+      }
+    },
+    {
+      path: '/artemisia',
+      component: ArtemisIA,
+      meta: {
+        title: 'ArtemisIA',
+        description: 'AI search assistant',
       }
     },
     {

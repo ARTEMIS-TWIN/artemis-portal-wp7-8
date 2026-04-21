@@ -8,6 +8,16 @@
       </span>
     </div>
 
+    <button
+      v-if="selectedCount"
+      type="button"
+      class="artemisia-suggestion mt-md"
+      @click="useArtemisIA()"
+    >
+      <i class="fas fa-robot mr-sm"></i>
+      Ask ArtemisIA with {{ selectedCount }} selected
+    </button>
+
     <div v-if="activeFilters.length">
       <div
         v-for="(filter, key) in activeFilters"
@@ -26,13 +36,14 @@
 
 <script setup lang="ts">
 import { $computed } from 'vue/macros';
-import { heritageEntityAggregationModule, heritageEntitySearchModule } from '@/store/modules';
+import { heritageEntityAggregationModule, heritageEntitySearchModule, artemisIAModule } from '@/store/modules';
 import { heritageFilter } from '@/store/modules/HeritageEntityAggregation';
 
 const params = $computed(() => heritageEntitySearchModule.getParams);
 const result = $computed(() => heritageEntitySearchModule.getResult);
 const perPage = $computed(() => parseInt(heritageEntitySearchModule.getPerPage));
 const activeFilters = $computed(() => heritageEntityAggregationModule.activeFilters);
+const selectedCount = $computed(() => artemisIAModule.selectedCount);
 
 const currentPage = $computed(() => {
   const page = parseInt(params.page);
@@ -55,5 +66,9 @@ const removeFilter = (filter: heritageFilter) => {
     value: filter.val,
     add: false,
   });
+};
+
+const useArtemisIA = () => {
+  artemisIAModule.useSelectionContext();
 };
 </script>

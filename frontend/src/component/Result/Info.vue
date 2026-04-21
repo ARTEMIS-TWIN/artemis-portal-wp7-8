@@ -8,6 +8,15 @@
         Page: {{ currentPage }} / {{ lastPage }}
       </span>
     </div>
+    <button
+      v-if="selectedCount"
+      type="button"
+      class="artemisia-suggestion mt-md"
+      @click="useArtemisIA()"
+    >
+      <i class="fas fa-robot mr-sm"></i>
+      Ask ArtemisIA with {{ selectedCount }} selected
+    </button>
     <div v-if="activeFilters.length && !hideFilters">
       <div v-for="(filter, key) in activeFilters" :key="key" @click="removeFilter(filter)"
         class="inline-block bg-lightGray mr-md mt-md py-xs px-sm cursor-pointer hover:bg-red-80 group transition-bg duration-300">
@@ -23,7 +32,7 @@
 
 <script setup lang="ts">
 import { $computed } from 'vue/macros';
-import { generalModule, searchModule, aggregationModule } from "@/store/modules";
+import { generalModule, searchModule, aggregationModule, artemisIAModule } from "@/store/modules";
 import { iKeyVal } from '@/store/modules/Aggregation';
 import utils from '@/utils/utils';
 
@@ -37,6 +46,7 @@ const perPage = $computed(() => parseInt(searchModule.getPerPage));
 const activeFilters = $computed(() => aggregationModule.activeFilters);
 const isNoFormat = $computed(() => generalModule.isNoFormat);
 const searchQuery: string = $computed(() => activeFilters.find((f: any) => f.key === 'q')?.val || '');
+const selectedCount = $computed(() => artemisIAModule.selectedCount);
 
 const currentPage: number = $computed(() => {
   let p = parseInt(params.page);
@@ -94,5 +104,9 @@ const removeFilter = (filter: iKeyVal) => {
     value: filter.val,
     add: false,
   });
+};
+
+const useArtemisIA = () => {
+  artemisIAModule.useSelectionContext();
 };
 </script>

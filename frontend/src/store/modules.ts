@@ -8,6 +8,7 @@ import { SearchModule } from './modules/Search';
 import { SubjectModule } from './modules/Subject';
 import { BreadCrumbModule } from './modules/BreadCrumb';
 import { PeriodsModule } from './modules/Periods';
+import { ArtemisIAModule } from './modules/ArtemisIA';
 
 export const generalModule = reactive(new GeneralModule());
 export const resourceModule = reactive(new ResourceModule(generalModule));
@@ -18,3 +19,4 @@ export const aggregationModule = reactive(new AggregationModule(searchModule, pe
 export const heritageEntityAggregationModule = reactive(new HeritageEntityAggregationModule(heritageEntitySearchModule));
 export const subjectModule = reactive(new SubjectModule(generalModule));
 export const breadCrumbModule = reactive(new BreadCrumbModule());
+export const artemisIAModule = reactive(new ArtemisIAModule());

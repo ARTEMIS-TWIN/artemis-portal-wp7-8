@@ -29,6 +29,10 @@ export const mainNavigation = [
     name: 'Heritage Entities',
   },
   {
+    path: '/artemisia',
+    name: 'ArtemisIA',
+  },
+  {
     path: '/browse',
     name: 'Browse',
   },

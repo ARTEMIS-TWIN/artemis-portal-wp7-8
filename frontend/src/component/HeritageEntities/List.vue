@@ -16,6 +16,19 @@
         :key="key"
         class="relative"
       >
+        <label class="artemisia-select" :class="{ 'artemisia-select--active': isSelected(res.id) }">
+          <input
+            type="checkbox"
+            :checked="isSelected(res.id)"
+            @click.stop
+            @change="toggleSelection(res)"
+          >
+          <span class="artemisia-select__label">
+            <i class="fas fa-robot mr-xs"></i>
+            Ask ArtemisIA
+          </span>
+        </label>
+
         <div class="absolute left-md top-base flex flex-col result-list__icon-column">
           <b-link
             :to="`/heritage-entities/${res.id}`"
@@ -30,6 +43,7 @@
         <b-link
           :to="`/heritage-entities/${res.id}`"
           class="block p-base transition-all duration-300 group result-card mb-base"
+          :class="{ 'result-card--selected': isSelected(res.id) }"
         >
           <div class="ml-4x pl-sm result-list__body">
             <h3 class="text-blue text-lg font-bold mb-base group-hover:underline app-section-title">
@@ -62,7 +76,7 @@
 
 <script setup lang="ts">
 import { $computed } from 'vue/macros';
-import { generalModule, heritageEntitySearchModule } from '@/store/modules';
+import { generalModule, heritageEntitySearchModule, artemisIAModule } from '@/store/modules';
 import utils from '@/utils/utils';
 import BLink from '@/component/Base/Link.vue';
 
@@ -71,5 +85,18 @@ const isLoading = $computed(() => generalModule.getIsLoading);
 
 const trimDescription = (value: string): string => {
   return utils.trimString(utils.cleanText(value, false), 320);
+};
+
+const isSelected = (id: string): boolean => {
+  return artemisIAModule.isHeritageEntitySelected(String(id));
+};
+
+const toggleSelection = (res: any) => {
+  artemisIAModule.toggleHeritageEntity({
+    id: String(res?.id || ''),
+    title: String(res?.data?.label || 'Untitled entity'),
+    type: 'heritage-entity',
+    subtitle: String(res?.data?.entityType || ''),
+  });
 };
 </script>
