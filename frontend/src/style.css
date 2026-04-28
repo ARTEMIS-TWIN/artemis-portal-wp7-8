@@ -265,6 +265,7 @@ input::placeholder, textarea::placeholder {
   align-items: center;
   gap: 0.45rem;
   min-height: 2.15rem;
+  max-width: 100%;
   padding: 0.35rem 0.7rem;
   border-radius: 999px;
   border: 1px solid rgba(11, 28, 50, 0.14);
@@ -280,10 +281,17 @@ input::placeholder, textarea::placeholder {
 }
 
 .heritage-authority-chip__label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-weight: 600;
 }
 
 .heritage-authority-chip__meta {
+  flex-shrink: 0;
+  white-space: nowrap;
   font-size: 0.78rem;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -292,8 +300,34 @@ input::placeholder, textarea::placeholder {
 }
 
 .heritage-authority-chip__icon {
+  flex-shrink: 0;
   font-size: 0.72rem;
   color: #5d6a7b;
+}
+
+.spatial-context-link {
+  @apply inline-flex items-center text-blue font-semibold transition-colors duration-300 hover:text-darkGray hover:underline;
+  text-decoration-color: rgba(31, 82, 134, 0.35);
+  text-underline-offset: 0.18em;
+  text-decoration-thickness: 1px;
+}
+
+.spatial-context-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 0.6rem;
+  row-gap: 0.35rem;
+  line-height: 1.35;
+}
+
+.spatial-context-entry + .spatial-context-entry {
+  margin-top: 0.35rem;
+}
+
+.spatial-context-comma {
+  color: #667382;
+  margin-left: -0.35rem;
 }
 
 .app-section-title {
@@ -860,6 +894,40 @@ input::placeholder, textarea::placeholder {
   font-weight: 600;
 }
 
+.detail-page__backlink {
+  margin-bottom: 0.5rem;
+}
+
+.detail-page__map {
+  margin-bottom: 0;
+}
+
+.detail-page__breadcrumbs {
+  margin-bottom: 0;
+}
+
+.detail-page__shell {
+  overflow: hidden;
+}
+
+.detail-page__title-block {
+  margin-bottom: 0.35rem;
+}
+
+.detail-page__title-row {
+  align-items: flex-start;
+}
+
+.detail-page__kicker {
+  color: var(--brand-muted);
+  letter-spacing: 0.12em;
+  font-weight: 700;
+}
+
+.detail-page__description {
+  margin-bottom: 0.35rem;
+}
+
 .result-info {
   display: flex;
   flex-wrap: wrap;
@@ -875,6 +943,459 @@ input::placeholder, textarea::placeholder {
   font-size: 0.9rem;
   font-weight: 500;
   color: var(--brand-text);
+}
+
+.result-card--selected {
+  box-shadow: 0 14px 38px rgba(10, 31, 58, 0.14);
+}
+
+.result-card--selected::after {
+  opacity: 1;
+  box-shadow: inset 0 0 0 2px rgba(11, 28, 50, 0.22);
+}
+
+.artemisia-select {
+  position: static;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  width: max-content;
+  margin: 0 0 0.45rem auto;
+  background: rgba(245, 250, 255, 0.98);
+  border: 1px solid rgba(31, 82, 134, 0.45);
+  border-radius: 999px;
+  padding: 0.24rem 0.62rem;
+  box-shadow: 0 7px 16px rgba(10, 31, 58, 0.1);
+  transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.artemisia-select:hover {
+  background: #edf5ff;
+  border-color: rgba(15, 46, 82, 0.7);
+  box-shadow: 0 10px 20px rgba(10, 31, 58, 0.15);
+}
+
+.artemisia-select--active {
+  background: #dfeeff;
+  border-color: rgba(15, 46, 82, 0.65);
+  box-shadow: 0 10px 22px rgba(15, 46, 82, 0.18);
+}
+
+.artemisia-select input {
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  accent-color: #1f5286;
+}
+
+.artemisia-select__label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--brand-text);
+  white-space: nowrap;
+}
+
+.artemisia-suggestion {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 46, 82, 0.35);
+  background: #e2ecfb;
+  box-shadow: 0 8px 18px rgba(10, 31, 58, 0.1);
+  padding: 0.38rem 0.86rem;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--brand-text);
+  transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.artemisia-suggestion:hover {
+  background: #d4e4fa;
+  border-color: rgba(15, 46, 82, 0.5);
+  box-shadow: 0 12px 24px rgba(10, 31, 58, 0.16);
+}
+
+.artemisia-floating {
+  position: fixed;
+  right: 1.2rem;
+  bottom: 1.2rem;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.7rem;
+}
+
+.artemisia-floating__launcher {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  border-radius: 999px;
+  border: 1px solid rgba(11, 28, 50, 0.18);
+  background: #0f2e52;
+  color: #ffffff;
+  font-weight: 700;
+  padding: 0.55rem 0.9rem;
+  box-shadow: 0 16px 36px rgba(10, 31, 58, 0.28);
+}
+
+.artemisia-floating__label {
+  letter-spacing: 0.02em;
+}
+
+.artemisia-floating__badge {
+  position: absolute;
+  top: -0.45rem;
+  right: -0.35rem;
+  min-width: 1.2rem;
+  height: 1.2rem;
+  border-radius: 999px;
+  background: #f2c800;
+  color: #0b1b33;
+  font-size: 0.74rem;
+  line-height: 1.2rem;
+  text-align: center;
+  padding: 0 0.25rem;
+}
+
+.artemisia-floating__panel {
+  width: min(25rem, calc(100vw - 1.2rem));
+  height: min(76vh, 45rem);
+  overflow: hidden;
+  overscroll-behavior: contain;
+  padding: 1rem;
+}
+
+.artemisia-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  height: 100%;
+  min-height: 21rem;
+}
+
+.artemisia-shell--page {
+  display: grid;
+  grid-template-columns: minmax(15rem, 1fr) minmax(0, 1.75fr);
+  align-items: stretch;
+  gap: 1rem;
+  height: min(78vh, 46rem);
+  min-height: 33rem;
+}
+
+.artemisia-shell__sidebar {
+  border-radius: 1rem;
+  background: linear-gradient(180deg, #f7faff 0%, #f1f7ff 100%);
+  box-shadow: 0 10px 28px rgba(10, 31, 58, 0.1);
+  padding: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.artemisia-shell__chat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.artemisia-shell__chat-header {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.artemisia-shell__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.artemisia-shell__header-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.artemisia-shell__title-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-weight: 700;
+}
+
+.artemisia-shell__title {
+  font-size: 1.02rem;
+}
+
+.artemisia-shell__subtitle {
+  color: var(--brand-muted);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.artemisia-shell__ghost {
+  border: 0;
+  border-radius: 999px;
+  background: #edf3fb;
+  box-shadow: 0 4px 10px rgba(10, 31, 58, 0.08);
+  color: var(--brand-text);
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0.22rem 0.6rem;
+}
+
+.artemisia-shell__ghost--icon {
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  justify-content: center;
+}
+
+.artemisia-context {
+  border-radius: 0.8rem;
+  background: #f5f9ff;
+  box-shadow: 0 8px 18px rgba(10, 31, 58, 0.08);
+  padding: 0.65rem;
+  min-height: 0;
+  flex-shrink: 1;
+}
+
+.artemisia-context--scrollable {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  max-height: 11.5rem;
+}
+
+.artemisia-shell:not(.artemisia-shell--page) .artemisia-context--scrollable {
+  max-height: 9.5rem;
+}
+
+.artemisia-context__title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.artemisia-context__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.45rem;
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding-right: 0.2rem;
+}
+
+.artemisia-context__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border-radius: 999px;
+  border: 0;
+  background: #ffffff;
+  box-shadow: inset 0 0 0 1px rgba(11, 28, 50, 0.12);
+  padding: 0.15rem 0.25rem 0.15rem 0.55rem;
+  font-size: 0.76rem;
+  max-width: 16rem;
+}
+
+.artemisia-context__chip-link {
+  color: var(--brand-text);
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.artemisia-context__chip-link:hover {
+  color: #1f5286;
+  text-decoration: underline;
+}
+
+.artemisia-context__chip-remove {
+  width: 1.2rem;
+  height: 1.2rem;
+  border: 0;
+  border-radius: 999px;
+  background: #edf3fb;
+  color: #516a86;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.artemisia-context__chip-remove:hover {
+  background: #d7e6fa;
+  color: #17395f;
+}
+
+.artemisia-context__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+}
+
+.artemisia-starters {
+  border-radius: 0.8rem;
+  background: #f7faff;
+  box-shadow: 0 6px 16px rgba(10, 31, 58, 0.08);
+  padding: 0.6rem;
+}
+
+.artemisia-starters__title {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--brand-muted);
+}
+
+.artemisia-starters__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.4rem;
+}
+
+.artemisia-starters__list--sidebar {
+  flex-direction: column;
+}
+
+.artemisia-starters__categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.45rem;
+}
+
+.artemisia-starters__category {
+  border: 0;
+  border-radius: 999px;
+  background: #eef4ff;
+  box-shadow: inset 0 0 0 1px rgba(11, 28, 50, 0.1);
+  color: var(--brand-muted);
+  font-size: 0.74rem;
+  font-weight: 700;
+  padding: 0.22rem 0.56rem;
+}
+
+.artemisia-starters__category--active {
+  background: #dbeaff;
+  box-shadow: inset 0 0 0 1px rgba(31, 82, 134, 0.42);
+  color: #17395f;
+}
+
+.artemisia-starters__prompt {
+  border-radius: 0.7rem;
+  border: 0;
+  background: #ffffff;
+  box-shadow: inset 0 0 0 1px rgba(11, 28, 50, 0.1), 0 6px 12px rgba(10, 31, 58, 0.08);
+  color: var(--brand-text);
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.35;
+  padding: 0.45rem 0.62rem;
+  text-align: left;
+}
+
+.artemisia-starters__prompt:hover {
+  background: #eaf2fe;
+  box-shadow: inset 0 0 0 1px rgba(31, 82, 134, 0.3), 0 8px 16px rgba(10, 31, 58, 0.1);
+}
+
+.artemisia-shell__messages {
+  border-radius: 0.9rem;
+  background: linear-gradient(180deg, #ffffff 0%, #f9fbff 100%);
+  box-shadow: 0 10px 28px rgba(10, 31, 58, 0.1);
+  padding: 0.75rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  min-height: 0;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.artemisia-msg {
+  max-width: 92%;
+  border-radius: 0.85rem;
+  padding: 0.64rem 0.8rem;
+  line-height: 1.5;
+  font-size: 1.02rem;
+}
+
+.artemisia-msg--assistant {
+  align-self: flex-start;
+  background: #f1f6ff;
+  box-shadow: 0 4px 12px rgba(10, 31, 58, 0.07);
+}
+
+.artemisia-msg--user {
+  align-self: flex-end;
+  background: #0f2e52;
+  color: #ffffff;
+}
+
+.artemisia-msg--user + .artemisia-msg--assistant,
+.artemisia-msg--assistant + .artemisia-msg--user {
+  margin-top: 0.4rem;
+}
+
+.artemisia-shell__composer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.55rem;
+  align-items: end;
+  margin-top: auto;
+  flex-shrink: 0;
+}
+
+.artemisia-shell__input {
+  width: 100%;
+  resize: vertical;
+  min-height: 2.8rem;
+  border: 0;
+  border-radius: 0.8rem;
+  padding: 0.55rem 0.65rem;
+  background: #ffffff;
+  box-shadow: inset 0 0 0 1px rgba(11, 28, 50, 0.12), 0 5px 14px rgba(10, 31, 58, 0.08);
+  outline: none;
+}
+
+.artemisia-shell__input:focus {
+  box-shadow: inset 0 0 0 1px rgba(31, 82, 134, 0.4), 0 0 0 3px rgba(31, 82, 134, 0.12);
+}
+
+.artemisia-shell__send {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 999px;
+  border: 0;
+  background: #1f5286;
+  box-shadow: 0 8px 18px rgba(10, 31, 58, 0.2);
+  color: #ffffff;
+  font-weight: 700;
+  padding: 0.5rem 0.85rem;
+  white-space: nowrap;
 }
 
 .map-legend {
@@ -908,6 +1429,11 @@ input::placeholder, textarea::placeholder {
 }
 
 @media (max-width: 1024px) {
+  .artemisia-shell--page {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+
   .content-grid {
     grid-template-columns: 1fr;
   }
@@ -931,5 +1457,27 @@ input::placeholder, textarea::placeholder {
 
   .map-legend__list {
     gap: 0.75rem 1rem;
+  }
+
+  .artemisia-floating {
+    right: 0.8rem;
+    bottom: 0.8rem;
+  }
+
+  .artemisia-floating__launcher {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .artemisia-floating__label {
+    display: none;
+  }
+
+  .artemisia-floating__panel {
+    width: min(24rem, calc(100vw - 1rem));
+    height: min(74vh, 39rem);
+  }
+
+  .artemisia-select__label {
+    display: none;
   }
 }

@@ -7,30 +7,33 @@
       </h3>
 
       <div :class="itemClass" v-if="entity.entityType">
-        <strong :class="bClass">Entity type</strong>{{ entity.entityType }}
+        <strong :class="bClass">Entity type</strong>
+        <b-link
+          :to="getFilterUrl('entityType', entity.entityType)"
+          class="spatial-context-link break-word"
+        >
+          {{ entity.entityType }}
+        </b-link>
       </div>
 
       <div :class="itemClass" v-if="entity.classification?.length">
         <strong :class="bClass">Classification</strong>
-        <authority-list :items="entity.classification" authority-label="Getty AAT" />
+        <authority-list :items="entity.classification" authority-label="Getty AAT" filter-key="classification" />
       </div>
 
       <div :class="itemClass" v-if="materialItems.length">
         <strong :class="bClass">Materials</strong>
-        <authority-list :items="materialItems" authority-label="Getty AAT" />
-      </div>
-
-      <div :class="itemClass" v-if="entity.periods?.length">
-        <strong :class="bClass">Periods</strong>
-        <authority-list :items="periodItems" authority-label="PeriodO" />
+        <authority-list :items="materialItems" authority-label="Getty AAT" filter-key="material" />
       </div>
 
       <div :class="itemClass" v-if="entity.ownerLabel">
-        <strong :class="bClass">Current owner</strong>{{ entity.ownerLabel }}
-      </div>
-
-      <div :class="itemClass" v-if="chronology">
-        <strong :class="bClass">Chronology</strong>{{ chronology }}
+        <strong :class="bClass">Current owner</strong>
+        <b-link
+          :to="getFilterUrl('owner', entity.ownerLabel)"
+          class="spatial-context-link break-word"
+        >
+          {{ entity.ownerLabel }}
+        </b-link>
       </div>
     </section>
 
@@ -48,8 +51,8 @@
             class="heritage-entity__image"
           >
         </a>
-        <figcaption class="mt-sm text-md">
-          {{ primaryImage.label || entity.label || 'Visual representation' }}
+        <figcaption v-if="showPrimaryImageCaption" class="mt-sm text-md">
+          {{ primaryImageCaption }}
         </figcaption>
       </figure>
     </section>
@@ -73,23 +76,37 @@
       </div>
     </section>
 
-    <section v-if="entity.location?.label || entity.countryLabel" :class="sectionClass">
-      <h3 class="text-lg font-bold mb-md">
-        <i class="fas fa-map-marker-alt mr-sm" />
-        Spatial Context
-      </h3>
+    <section
+      v-if="entity.location?.label || entity.placeLabel || entity.countryLabel || entity.location?.countryLabel"
+      :class="sectionClass"
+    >
+      <heritage-entity-main-spatial-context
+        :entity="entity"
+        :itemClass="itemClass"
+        :bClass="bClass"
+      />
+    </section>
 
-      <div :class="itemClass" v-if="entity.location?.label">
-        <strong :class="bClass">Location</strong>{{ entity.location.label }}
-      </div>
+    <section
+      v-if="entity.location?.lat !== undefined || entity.location?.geopoint"
+      :class="sectionClass"
+    >
+      <heritage-entity-main-coordinates
+        :entity="entity"
+        :itemClass="itemClass"
+        :bClass="bClass"
+      />
+    </section>
 
-      <div :class="itemClass" v-if="entity.placeLabel">
-        <strong :class="bClass">Place</strong>{{ entity.placeLabel }}
-      </div>
-
-      <div :class="itemClass" v-if="entity.countryLabel">
-        <strong :class="bClass">Country</strong>{{ entity.countryLabel }}
-      </div>
+    <section
+      v-if="entity.periods?.length || (entity.minPeriodFrom !== undefined && entity.maxPeriodUntil !== undefined)"
+      :class="sectionClass"
+    >
+      <heritage-entity-main-temporal-context
+        :entity="entity"
+        :itemClass="itemClass"
+        :bClass="bClass"
+      />
     </section>
   </div>
 </template>
@@ -97,6 +114,11 @@
 <script setup lang="ts">
 import { $computed } from 'vue/macros';
 import AuthorityList from './AuthorityList.vue';
+import HeritageEntityMainSpatialContext from './Main/SpatialContext.vue';
+import HeritageEntityMainCoordinates from './Main/Coordinates.vue';
+import HeritageEntityMainTemporalContext from './Main/TemporalContext.vue';
+import BLink from '@/component/Base/Link.vue';
+import utils from '@/utils/utils';
 
 const props = defineProps<{
   entity: any,
@@ -114,25 +136,21 @@ const materialItems = $computed(() => {
   return (props.entity?.materials || []).map((label: string) => ({ label }));
 });
 
-const periodItems = $computed(() => {
-  return (props.entity?.periods || []).map((item: any) => ({
-    label: item.label,
-    uri: item.uri,
-  }));
-});
-
 const primaryImage = $computed(() => {
   return props.entity?.visualRepresentations?.[0] || null;
 });
 
-const chronology = $computed(() => {
-  const from = props.entity?.minPeriodFrom;
-  const until = props.entity?.maxPeriodUntil;
-
-  if (from === undefined || from === null || until === undefined || until === null) {
-    return '';
-  }
-
-  return `${from} to ${until}`;
+const primaryImageCaption = $computed(() => {
+  return String(props.entity?.visualRepresentations?.[0]?.label || props.entity?.label || '').trim();
 });
+
+const showPrimaryImageCaption = $computed(() => {
+  return primaryImageCaption !== '' && !utils.validUrl(primaryImageCaption);
+});
+
+const getFilterUrl = (key: string, value: string): string => {
+  return utils.paramsToString('/heritage-entities', {
+    [key]: value,
+  });
+};
 </script>

@@ -15,6 +15,19 @@
         v-bind:key="key"
         class="relative"
       >
+        <label class="artemisia-select" :class="{ 'artemisia-select--active': isSelected(res.id) }">
+          <input
+            type="checkbox"
+            :checked="isSelected(res.id)"
+            @click.stop
+            @change="toggleSelection(res)"
+          >
+          <span class="artemisia-select__label">
+            <i class="fas fa-robot mr-xs"></i>
+            Ask ArtemisIA
+          </span>
+        </label>
+
         <!-- icon -->
         <div class="absolute left-md top-base flex flex-col result-list__icon-column">
           <help-tooltip
@@ -70,6 +83,7 @@
         <b-link
           :to="`/resource/${ res.id }`"
           class="block p-base transition-all duration-300 group result-card mb-base"
+          :class="{ 'result-card--selected': isSelected(res.id) }"
         >
           <div class="ml-4x pl-sm result-list__body">
             <!-- title -->
@@ -122,7 +136,7 @@
 
 <script setup lang="ts">
 import { $computed, $ref } from 'vue/macros';
-import { generalModule, searchModule, aggregationModule, resourceModule } from "@/store/modules";
+import { generalModule, searchModule, aggregationModule, resourceModule, artemisIAModule } from "@/store/modules";
 
 // base & utils
 import utils from '@/utils/utils';
@@ -320,4 +334,17 @@ const noFormat = (key: string, publisher: any) => {
   }
   return false;
 }
+
+const isSelected = (id: string): boolean => {
+  return artemisIAModule.isDataResourceSelected(String(id));
+};
+
+const toggleSelection = (res: any) => {
+  artemisIAModule.toggleDataResource({
+    id: String(res?.id || ''),
+    title: String(res?.data?.title?.text || 'Untitled resource'),
+    type: 'data-resource',
+    subtitle: String(res?.data?.resourceType || ''),
+  });
+};
 </script>

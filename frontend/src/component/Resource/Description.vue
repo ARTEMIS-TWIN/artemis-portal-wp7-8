@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="detail-page__description">
     <!-- heading -->
     <h3 class="text-lg font-bold mb-md">
       <i class="fas fa-info-circle mr-sm" />

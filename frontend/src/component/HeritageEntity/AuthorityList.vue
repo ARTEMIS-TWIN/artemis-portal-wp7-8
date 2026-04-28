@@ -1,23 +1,48 @@
 <template>
   <div class="flex flex-wrap gap-sm">
-    <a
+    <b-link
       v-for="(item, key) in items"
       :key="key"
-      :href="item.uri || undefined"
-      :target="item.uri ? '_blank' : undefined"
       class="heritage-authority-chip"
-      :class="{ 'heritage-authority-chip--linked': !!item.uri }"
+      :class="{ 'heritage-authority-chip--linked': !!item.label }"
+      :to="isFilterMode ? getFilterUrl(item.label) : undefined"
+      :href="isExternalMode ? item.uri || undefined : undefined"
+      :target="isExternalMode && item.uri ? '_blank' : undefined"
     >
       <span class="heritage-authority-chip__label">{{ item.label }}</span>
-      <span class="heritage-authority-chip__meta">{{ authorityLabel }}</span>
-      <i v-if="item.uri" class="fas fa-external-link-alt heritage-authority-chip__icon" aria-hidden="true"></i>
-    </a>
+      <span v-if="showAuthorityLabel" class="heritage-authority-chip__meta">{{ authorityLabel }}</span>
+      <i :class="authorityIconClass" class="heritage-authority-chip__icon" aria-hidden="true"></i>
+    </b-link>
   </div>
 </template>
 
 <script setup lang="ts">
-defineProps<{
+import { $computed } from 'vue/macros';
+import BLink from '@/component/Base/Link.vue';
+import utils from '@/utils/utils';
+
+const props = defineProps<{
   items: Array<{ label: string, uri?: string | null }>,
   authorityLabel: string,
+  filterKey?: string,
+  basePath?: string,
+  showAuthorityLabel?: boolean,
+  mode?: 'filter' | 'external',
 }>();
+
+const isFilterMode = $computed(() => (props.mode || 'filter') === 'filter');
+const isExternalMode = $computed(() => (props.mode || 'filter') === 'external');
+const showAuthorityLabel = $computed(() => props.showAuthorityLabel !== false);
+const authorityIconClass = $computed(() => isFilterMode ? 'fas fa-search' : 'fas fa-external-link-alt');
+
+const getFilterUrl = (value: string): string => {
+  const basePath = props.basePath || '/heritage-entities';
+  if (!props.filterKey) {
+    return basePath;
+  }
+
+  return utils.paramsToString(basePath, {
+    [props.filterKey]: value,
+  });
+};
 </script>
