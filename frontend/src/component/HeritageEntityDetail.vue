@@ -14,16 +14,6 @@
     </div>
 
     <div v-else-if="entity" class="text-mmd detail-page">
-      <div class="detail-page__backlink">
-        <b-link
-          to="/heritage-entities"
-          class="p-md app-panel text-blue border-b-base border-gray hover:bg-white transition-bg duration-300 w-full block text-center rounded-2xl max-w-screen-xl mx-auto"
-        >
-          <i class="fas fa-long-arrow-alt-left mr-sm"></i>
-          Back to Heritage Entities
-        </b-link>
-      </div>
-
       <div class="detail-page__map">
         <heritage-entity-map v-if="hasMapData" :entity="entity" />
         <div v-else class="pb-md"></div>
@@ -72,7 +62,6 @@ import { watch } from 'vue';
 import { $ref, $computed } from 'vue/macros';
 import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router';
 import { generalModule } from '@/store/modules';
-import BLink from '@/component/Base/Link.vue';
 import HeritageEntityMap from '@/component/HeritageEntity/Map.vue';
 import HeritageEntityMain from '@/component/HeritageEntity/Main.vue';
 import HeritageEntitySidebar from '@/component/HeritageEntity/Sidebar.vue';

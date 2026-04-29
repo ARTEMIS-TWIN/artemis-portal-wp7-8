@@ -329,8 +329,14 @@ class PortalSearchService
 
     public function getServicesAndPublishers(): array
     {
+        $services = $this->importedServicesListing();
+
+        if ($services === []) {
+            $services = $this->simpleIndexListing($this->servicesIndex());
+        }
+
         return [
-            'services' => $this->simpleIndexListing($this->servicesIndex()),
+            'services' => $services,
             'publishers' => $this->simpleIndexListing($this->publishersIndex()),
         ];
     }
@@ -1711,10 +1717,47 @@ class PortalSearchService
             'query' => ['match_all' => new stdClass()],
         ]);
 
-        return array_map(
-            static fn (array $hit): array => $hit['_source'] ?? [],
+        return array_values(array_map(
+            static function (array $hit): array {
+                $source = $hit['_source'] ?? [];
+
+                if (!isset($source['id'])) {
+                    $source['id'] = $hit['_id'] ?? null;
+                }
+
+                return $source;
+            },
             Arr::get($response, 'hits.hits', [])
-        );
+        ));
+    }
+
+    private function importedServicesListing(): array
+    {
+        try {
+            $response = $this->request('POST', '/'.$this->servicesIndex().'/_search', [
+                'size' => 10000,
+                'sort' => [['id' => ['order' => 'asc']]],
+                'query' => ['match_all' => new stdClass()],
+            ]);
+        } catch (RuntimeException) {
+            return [];
+        }
+
+        return array_values(array_map(
+            static function (array $hit): array {
+                $source = $hit['_source'] ?? [];
+
+                if (!isset($source['id'])) {
+                    $source['id'] = $hit['_id'] ?? null;
+                }
+
+                return $source;
+            },
+            array_values(array_filter(
+                Arr::get($response, 'hits.hits', []),
+                static fn (array $hit): bool => ($hit['_source']['importSource'] ?? null) === 'services-ttl',
+            ))
+        ));
     }
 
     private function searchRecords(array $payload): array

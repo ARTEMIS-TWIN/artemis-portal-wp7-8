@@ -15,6 +15,7 @@ import Subject from './component/Subject.vue';
 import Publisher from './component/Publisher.vue';
 import Result from './component/Result.vue';
 import Services from './component/Services.vue';
+import ServiceDetail from './component/ServiceDetail.vue';
 import Theme from './component/Theme.vue';
 import Infographic from './component/Infographic.vue';
 import Guide from './component/Guide.vue';
@@ -116,6 +117,15 @@ const router = createRouter({
       meta: {
         title: 'Services',
         description: 'Services page'
+      }
+    },
+    {
+      path: '/services/:id',
+      props: true,
+      component: ServiceDetail,
+      meta: {
+        title: 'Service',
+        description: 'Service detail',
       }
     },
     {
