@@ -44,6 +44,11 @@ export const mainNavigation = [
     path: '/about',
     name: 'About',
   },
+  {
+  href: '/admin',
+   name: '',
+  icon: 'fas fa-user',
+},
 ];
 
 /**

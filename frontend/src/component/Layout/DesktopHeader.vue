@@ -13,13 +13,19 @@
         <span class="portal-logo__tagline">Data Infrastructure</span>
       </b-link>
       <nav class="portal-nav">
-        <b-link
-          v-for="item in generalModule.getMainNavigation"
-          :key="item.path"
-          :to="item.path"
-          :class="{ active: isActive(item.path) }"
+       <b-link
+        v-for="item in generalModule.getMainNavigation"
+        :key="item.path || item.href"
+        :to="item.path"
+        :href="item.href"
+        :class="{ active: item.path && isActive(item.path) }"
         >
-          {{ item.name }}
+          <i
+            v-if="item.icon"
+            :class="item.icon"
+            class="admin-icon"
+          ></i>
+          <span v-else>{{ item.name }}</span>
         </b-link>
       </nav>
     </div>
