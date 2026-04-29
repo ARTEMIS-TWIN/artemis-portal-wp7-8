@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\HeritageEntityApiController;
 use App\Http\Controllers\Api\PortalApiController;
+use App\Http\Controllers\Api\ArtemisIAApiController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/heritage-entities/search', [HeritageEntityApiController::class, 'search']);
@@ -22,3 +23,5 @@ Route::get('/getAllServicesAndPublishers', [PortalApiController::class, 'getAllS
 Route::get('/getAllNoFormats', [PortalApiController::class, 'getAllNoFormats']);
 Route::get('/getRecord/{id}', [PortalApiController::class, 'getRecord']);
 Route::get('/getRecord/{id}/xml', [PortalApiController::class, 'getRecordXml']);
+
+Route::post('/artemisia/chat', [ArtemisIAApiController::class, 'chat']);

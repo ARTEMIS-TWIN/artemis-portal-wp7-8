@@ -35,4 +35,23 @@ return [
         ],
     ],
 
+    'mistral' => [
+        'api_key' => env('MISTRAL_API_KEY'),
+        'base_url' => env('MISTRAL_BASE_URL', 'https://api.mistral.ai/v1'),
+        'model_large' => env('MISTRAL_MODEL_LARGE', 'mistral-large-latest'),
+        'model_medium' => env('MISTRAL_MODEL_MEDIUM', 'mistral-medium-latest'),
+        'timeout' => (int) env('MISTRAL_TIMEOUT', 30),
+    ],
+
+    'artemisia' => [
+        'force_llm' => (bool) env('ARTEMISIA_FORCE_LLM', true),
+        'llm_provider' => env('ARTEMISIA_LLM_PROVIDER', 'mistral'),
+        'ollama' => [
+            'base_url' => env('OLLAMA_BASE_URL', 'http://127.0.0.1:11434'),
+            'model_large' => env('OLLAMA_MODEL_LARGE', 'mistral'),
+            'model_medium' => env('OLLAMA_MODEL_MEDIUM', 'mistral'),
+            'timeout' => (int) env('OLLAMA_TIMEOUT', 120),
+        ],
+    ],
+
 ];

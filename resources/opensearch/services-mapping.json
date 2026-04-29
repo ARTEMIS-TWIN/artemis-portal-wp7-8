@@ -2,14 +2,33 @@
   "mappings": {
     "dynamic": "false",
     "properties": {
+      "importSource": {
+        "type": "keyword"
+      },
+      "sourcePath": {
+        "type": "keyword"
+      },
+      "uri": {
+        "type": "keyword"
+      },
       "id": {
         "type": "long"
       },
       "title": {
-        "type": "text"
+        "type": "text",
+        "fields": {
+          "keyword": {
+            "type": "keyword"
+          }
+        }
       },
       "topic": {
-        "type": "text"
+        "type": "text",
+        "fields": {
+          "keyword": {
+            "type": "keyword"
+          }
+        }
       },
       "description": {
         "type": "text"
@@ -19,6 +38,73 @@
       },
       "img": {
         "type": "text"
+      },
+      "provider": {
+        "properties": {
+          "uri": {
+            "type": "keyword"
+          },
+          "name": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword"
+              }
+            }
+          },
+          "homepage": {
+            "type": "keyword"
+          },
+          "email": {
+            "type": "keyword"
+          }
+        }
+      },
+      "functionalities": {
+        "type": "keyword"
+      },
+      "usedForActivities": {
+        "type": "keyword"
+      },
+      "intendedFor": {
+        "type": "keyword"
+      },
+      "technicalSupport": {
+        "type": "keyword"
+      },
+      "languages": {
+        "type": "keyword"
+      },
+      "composedOf": {
+        "type": "keyword"
+      },
+      "consumedMedia": {
+        "type": "keyword"
+      },
+      "producedMedia": {
+        "type": "keyword"
+      },
+      "consumedFormats": {
+        "type": "keyword"
+      },
+      "producedFormats": {
+        "type": "keyword"
+      },
+      "documents": {
+        "type": "nested",
+        "properties": {
+          "uri": {
+            "type": "keyword"
+          },
+          "label": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword"
+              }
+            }
+          }
+        }
       }
     }
   }

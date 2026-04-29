@@ -10,16 +10,6 @@
     </div>
 
     <div v-else class="text-mmd detail-page">
-      <div v-if="fromPath" class="detail-page__backlink">
-        <b-link
-          :to="utils.paramsToString(fromPath.path, params)"
-          class="p-md app-panel text-blue border-b-base border-gray hover:bg-white transition-bg duration-300 w-full block text-center rounded-2xl max-w-screen-xl mx-auto"
-        >
-          <i class="fas fa-long-arrow-alt-left mr-sm"></i>
-          Back to {{ fromPath.title }}
-        </b-link>
-      </div>
-
       <div class="detail-page__map">
         <resource-map v-if="resource" />
       </div>
@@ -48,9 +38,7 @@
 import { watch, onMounted, nextTick } from 'vue';
 import { $ref, $computed } from 'vue/macros';
 import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router'
-import { searchModule, generalModule, resourceModule } from "@/store/modules";
-import utils from '@/utils/utils';
-import BLink from '@/component/Base/Link.vue';
+import { generalModule, resourceModule } from "@/store/modules";
 
 // unique
 import ResourceMap from './Resource/Map.vue';
@@ -70,8 +58,6 @@ let forced: boolean = $ref(false);
 
 const isLoading: boolean = $computed(() => generalModule.getIsLoading);
 const resource = $computed(() => resourceModule.getResource);
-const params = $computed(() => searchModule.getParams);
-const fromPath = $computed(() => utils.objectIsNotEmpty(params) ? resourceModule.getFromPath : null);
 
 onMounted(() => {
   initResource(props.id);

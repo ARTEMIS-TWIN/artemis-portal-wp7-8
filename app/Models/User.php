@@ -65,4 +65,9 @@ class User extends Authenticatable implements FilamentUser
     {
         return $this->hasMany(ImportedHeritageEntity::class, 'imported_by');
     }
+
+    public function importedServices()
+    {
+        return $this->hasMany(ImportedService::class, 'imported_by');
+    }
 }

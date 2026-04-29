@@ -1,3 +1,5 @@
+import axios from 'axios';
+
 type ArtemisIARecord = {
   id: string,
   title: string,
@@ -15,6 +17,8 @@ type ArtemisIAMessage = {
 export class ArtemisIAModule {
   panelOpen: boolean = false;
   draft: string = '';
+  sessionId: string = this.createSessionId();
+  lastScopeUsed: 'selected_only' | 'global' | '' = '';
   messages: ArtemisIAMessage[] = [
     {
       id: 1,
@@ -54,6 +58,8 @@ export class ArtemisIAModule {
   }
 
   resetConversation() {
+    this.sessionId = this.createSessionId();
+    this.lastScopeUsed = '';
     this.messages = [
       {
         id: this.nextMessageId++,
@@ -91,7 +97,7 @@ export class ArtemisIAModule {
     this.draft = `Compare my ${ this.selectedCount } selected records and suggest the best next filters.`;
   }
 
-  submitMessage(text?: string) {
+  async submitMessage(text?: string) {
     const content = String(text ?? this.draft).trim();
     if (!content) {
       return;
@@ -107,16 +113,52 @@ export class ArtemisIAModule {
     this.draft = '';
     this.typing = true;
 
-    const reply = this.buildReply(content);
-    setTimeout(() => {
+    try {
+      const payload = {
+        message: content,
+        sessionId: this.sessionId,
+        selectedRecords: this.allSelected.map((record) => ({
+          id: record.id,
+          type: record.type,
+          title: record.title,
+        })),
+        history: this.messages.slice(-10).map((message) => ({
+          role: message.role,
+          text: message.text,
+        })),
+      };
+
+      const response = await axios.post(process.env.apiUrl + '/artemisia/chat', payload);
+      const data = response?.data || {};
+      const reply = String(data.response || '').trim();
+
+      if (data.sessionId) {
+        this.sessionId = String(data.sessionId);
+      }
+
+      if (data.scopeUsed === 'selected_only' || data.scopeUsed === 'global') {
+        this.lastScopeUsed = data.scopeUsed;
+      } else {
+        this.lastScopeUsed = '';
+      }
+
       this.messages.push({
         id: this.nextMessageId++,
         role: 'assistant',
-        text: reply,
+        text: reply || 'I could not generate a response right now. Please try again.',
         ts: Date.now(),
       });
+    } catch (error: any) {
+      const backendMessage = String(error?.response?.data?.message || '').trim();
+      this.messages.push({
+        id: this.nextMessageId++,
+        role: 'assistant',
+        text: backendMessage || 'ArtemisIA is temporarily unavailable. Please check configuration and try again.',
+        ts: Date.now(),
+      });
+    } finally {
       this.typing = false;
-    }, 380);
+    }
   }
 
   private toggleRecord(record: ArtemisIARecord, target: ArtemisIARecord[]) {
@@ -140,25 +182,6 @@ export class ArtemisIAModule {
     });
   }
 
-  private buildReply(question: string): string {
-    const total = this.selectedCount;
-    const hints = [
-      'Try combining one keyword with one filter first, then narrow gradually.',
-      'You can compare selected records by type, place, period, and publisher/owner.',
-      'If results are broad, apply one temporal and one spatial filter together.',
-    ];
-
-    if (total > 0) {
-      return `I can use your ${ total } selected record${ total > 1 ? 's' : '' } as context. ${ hints[0] } ${ hints[1] }`;
-    }
-
-    if (/compare|difference|similar/i.test(question)) {
-      return `Select two or more records and I will help structure a comparison. ${ hints[1] }`;
-    }
-
-    return hints[Math.floor(Math.random() * hints.length)];
-  }
-
   get selectedCount(): number {
     return this.selectedDataResources.length + this.selectedHeritageEntities.length;
   }
@@ -176,5 +199,9 @@ export class ArtemisIAModule {
 
   get allSelected(): ArtemisIARecord[] {
     return [...this.selectedDataResources, ...this.selectedHeritageEntities];
+  }
+
+  private createSessionId(): string {
+    return `artemisia-${ Date.now() }-${ Math.random().toString(36).slice(2, 10) }`;
   }
 }
