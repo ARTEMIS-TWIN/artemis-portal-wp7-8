@@ -11,7 +11,7 @@
       </div>
       <div class="portal-footer__links">
         <b-link href="https://www.artemis-twin.eu/" target="_blank">ARTEMIS site</b-link>
-        <b-link href="https://ariadne-graphdb.cloud.d4science.org/" target="_blank">GraphDB</b-link>
+        <b-link href="https://graphdb.ino.cnr.it/" target="_blank">GraphDB</b-link>
       </div>
     </div>
   </footer>
