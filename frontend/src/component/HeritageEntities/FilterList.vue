@@ -13,6 +13,7 @@
     </button>
 
     <heritage-entities-map class="mb-lg" />
+    <heritage-entities-time-line />
 
     <heritage-entity-aggregation
       v-for="(item, id) in sortedAggs"
@@ -28,6 +29,7 @@ import { $computed } from 'vue/macros';
 import { heritageEntityAggregationModule, heritageEntitySearchModule } from '@/store/modules';
 import HeritageEntityAggregation from './Aggregation.vue';
 import HeritageEntitiesMap from './Map.vue';
+import HeritageEntitiesTimeLine from './TimeLine.vue';
 import HeritageEntitySearchInput from './SearchInput.vue';
 
 const sortedAggs = $computed(() => heritageEntityAggregationModule.getSorted);

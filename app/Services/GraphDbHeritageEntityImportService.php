@@ -12,6 +12,8 @@ use RuntimeException;
 
 class GraphDbHeritageEntityImportService
 {
+    private bool $timelineMappingEnsured = false;
+
     public function __construct(
         private readonly PortalResourceImportService $portalResources,
     ) {
@@ -23,6 +25,8 @@ class GraphDbHeritageEntityImportService
      */
     public function importGraph(string $graphUri, array $entityUris = []): array
     {
+        $this->ensureTimelineMapping();
+
         $graphUri = $this->assertAbsoluteUri($graphUri, 'graph');
 
         if ($entityUris === []) {
@@ -133,6 +137,62 @@ class GraphDbHeritageEntityImportService
         }
 
         return count($records);
+    }
+
+    /**
+     * @return array{total: int, updated: int}
+     */
+    public function backfillTimelineBounds(bool $dryRun = false): array
+    {
+        $this->ensureTimelineMapping();
+
+        $total = 0;
+        $updated = 0;
+
+        foreach ($this->fetchIndexedDocumentsForTimelineBackfill() as $document) {
+            $total++;
+            $documentId = (string) ($document['id'] ?? '');
+
+            if ($documentId === '') {
+                continue;
+            }
+
+            $periods = $this->normalizeTimelinePeriods($document);
+            $chronologyFrom = $this->toIntOrNull(isset($document['minPeriodFrom']) ? (string) $document['minPeriodFrom'] : null);
+            $chronologyUntil = $this->toIntOrNull(isset($document['maxPeriodUntil']) ? (string) $document['maxPeriodUntil'] : null);
+            $timeline = $this->resolveTimelineBounds($periods, $chronologyFrom, $chronologyUntil);
+
+            if ($timeline['source'] === null) {
+                continue;
+            }
+
+            $currentFrom = $this->toIntOrNull(isset($document['timelineFrom']) ? (string) $document['timelineFrom'] : null);
+            $currentUntil = $this->toIntOrNull(isset($document['timelineUntil']) ? (string) $document['timelineUntil'] : null);
+            $currentSource = trim((string) ($document['timelineSource'] ?? ''));
+
+            if (
+                $currentFrom === $timeline['from']
+                && $currentUntil === $timeline['until']
+                && $currentSource === $timeline['source']
+            ) {
+                continue;
+            }
+
+            if (! $dryRun) {
+                $this->updateDocumentTimeline($documentId, [
+                    'timelineFrom' => $timeline['from'],
+                    'timelineUntil' => $timeline['until'],
+                    'timelineSource' => $timeline['source'],
+                ]);
+            }
+
+            $updated++;
+        }
+
+        return [
+            'total' => $total,
+            'updated' => $updated,
+        ];
     }
 
     /**
@@ -293,6 +353,9 @@ SPARQL;
         $materialDetails = $this->collectKeyedPairs($rows, 'material', 'materialLabel');
         $materials = $this->collectLabels($rows, 'materialLabel', 'material');
         $periods = $this->collectPeriods($rows);
+        $minPeriodFrom = $this->minPeriodFrom($periods);
+        $maxPeriodUntil = $this->maxPeriodUntil($periods);
+        $timeline = $this->resolveTimelineBounds($periods, $minPeriodFrom, $maxPeriodUntil);
         $sameAs = $this->collectDistinctValues($rows, 'sameAs');
         $identifiers = $this->collectIdentifiers($rows);
         $owner = $this->collectOwner($rows);
@@ -331,8 +394,11 @@ SPARQL;
                 $periods,
             ))),
             'periods' => $periods,
-            'minPeriodFrom' => $this->minPeriodFrom($periods),
-            'maxPeriodUntil' => $this->maxPeriodUntil($periods),
+            'minPeriodFrom' => $minPeriodFrom,
+            'maxPeriodUntil' => $maxPeriodUntil,
+            'timelineFrom' => $timeline['from'],
+            'timelineUntil' => $timeline['until'],
+            'timelineSource' => $timeline['source'],
             'countryLabel' => $location['countryLabel'] ?? null,
             'countryUri' => $location['countryUri'] ?? null,
             'placeLabel' => $location['placeLabel'] ?? null,
@@ -358,6 +424,56 @@ SPARQL;
             'sourceGraph' => $graphUri,
             'location' => $location['location'] ?? null,
         ], static fn (mixed $value): bool => $value !== null && $value !== []);
+    }
+
+    /**
+     * Timeline source preference:
+     * 1) numeric years extracted from Dating labels (period labels)
+     * 2) chronology numeric range (minPeriodFrom/maxPeriodUntil)
+     *
+     * @param  list<array{uri: string, label: string, from: int|null, until: int|null}>  $periods
+     * @return array{from: int|null, until: int|null, source: 'dating'|'chronology'|null}
+     */
+    private function resolveTimelineBounds(array $periods, ?int $chronologyFrom, ?int $chronologyUntil): array
+    {
+        $datingYears = [];
+
+        foreach ($periods as $period) {
+            $label = (string) ($period['label'] ?? '');
+            $bounds = $this->extractYearBoundsFromLabel($label);
+
+            if ($bounds['from'] !== null) {
+                $datingYears[] = $bounds['from'];
+            }
+
+            if ($bounds['until'] !== null) {
+                $datingYears[] = $bounds['until'];
+            }
+        }
+
+        if ($datingYears !== []) {
+            sort($datingYears);
+
+            return [
+                'from' => $datingYears[0],
+                'until' => $datingYears[count($datingYears) - 1],
+                'source' => 'dating',
+            ];
+        }
+
+        if ($chronologyFrom !== null || $chronologyUntil !== null) {
+            return [
+                'from' => $chronologyFrom,
+                'until' => $chronologyUntil,
+                'source' => 'chronology',
+            ];
+        }
+
+        return [
+            'from' => null,
+            'until' => null,
+            'source' => null,
+        ];
     }
 
     /**
@@ -449,15 +565,57 @@ SPARQL;
                 continue;
             }
 
+            $label = trim((string) ($row['periodLabel']['value'] ?? $row['period']['value'] ?? $periodUri)) ?: $periodUri;
+            $from = $this->toIntOrNull($row['from']['value'] ?? null);
+            $until = $this->toIntOrNull($row['until']['value'] ?? null);
+            $fallbackBounds = $this->extractYearBoundsFromLabel($label);
+
+            if ($from === null) {
+                $from = $fallbackBounds['from'];
+            }
+
+            if ($until === null) {
+                $until = $fallbackBounds['until'];
+            }
+
             $items[$periodUri] = [
                 'uri' => $periodUri,
-                'label' => trim((string) ($row['periodLabel']['value'] ?? $row['period']['value'] ?? $periodUri)) ?: $periodUri,
-                'from' => $this->toIntOrNull($row['from']['value'] ?? null),
-                'until' => $this->toIntOrNull($row['until']['value'] ?? null),
+                'label' => $label,
+                'from' => $from,
+                'until' => $until,
             ];
         }
 
         return array_values($items);
+    }
+
+    /**
+     * Try to recover chronology years from dating labels when explicit numeric bounds are missing.
+     *
+     * @return array{from: int|null, until: int|null}
+     */
+    private function extractYearBoundsFromLabel(string $label): array
+    {
+        if ($label === '') {
+            return ['from' => null, 'until' => null];
+        }
+
+        preg_match_all('/-?\d{1,6}/', $label, $matches);
+        $years = array_values(array_filter(array_map(
+            static fn (string $year): ?int => is_numeric($year) ? (int) $year : null,
+            $matches[0] ?? [],
+        ), static fn (?int $year): bool => $year !== null));
+
+        if ($years === []) {
+            return ['from' => null, 'until' => null];
+        }
+
+        sort($years);
+
+        return [
+            'from' => $years[0],
+            'until' => $years[count($years) - 1],
+        ];
     }
 
     /**
@@ -743,6 +901,55 @@ SPARQL;
         return $response->json() ?? [];
     }
 
+    /**
+     * @param  array{timelineFrom: int|null, timelineUntil: int|null, timelineSource: 'dating'|'chronology'|null}  $timeline
+     */
+    private function updateDocumentTimeline(string $documentId, array $timeline): void
+    {
+        try {
+            $response = Http::timeout(30)
+                ->acceptJson()
+                ->withBody(json_encode(['doc' => $timeline], JSON_UNESCAPED_SLASHES), 'application/json')
+                ->send('POST', $this->opensearchBaseUrl().'/'.$this->heritageIndex().'/_update/'.rawurlencode($documentId).'?refresh=wait_for');
+        } catch (ConnectionException $exception) {
+            throw new RuntimeException('OpenSearch is unreachable: '.$exception->getMessage(), previous: $exception);
+        }
+
+        if ($response->failed()) {
+            throw new RuntimeException("OpenSearch timeline backfill failed for {$documentId}: ".$response->body());
+        }
+    }
+
+    private function ensureTimelineMapping(): void
+    {
+        if ($this->timelineMappingEnsured) {
+            return;
+        }
+
+        $payload = [
+            'properties' => [
+                'timelineFrom' => ['type' => 'integer'],
+                'timelineUntil' => ['type' => 'integer'],
+                'timelineSource' => ['type' => 'keyword'],
+            ],
+        ];
+
+        try {
+            $response = Http::timeout(30)
+                ->acceptJson()
+                ->withBody(json_encode($payload, JSON_UNESCAPED_SLASHES), 'application/json')
+                ->send('PUT', $this->opensearchBaseUrl().'/'.$this->heritageIndex().'/_mapping');
+        } catch (ConnectionException $exception) {
+            throw new RuntimeException('OpenSearch is unreachable: '.$exception->getMessage(), previous: $exception);
+        }
+
+        if ($response->failed()) {
+            throw new RuntimeException('OpenSearch mapping update failed for heritage timeline fields: '.$response->body());
+        }
+
+        $this->timelineMappingEnsured = true;
+    }
+
     private function documentId(string $entityUri): string
     {
         return hash('sha256', $entityUri);
@@ -888,5 +1095,117 @@ SPARQL;
         } while (! empty($hits));
 
         return $documents;
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function fetchIndexedDocumentsForTimelineBackfill(): array
+    {
+        $documents = [];
+        $searchAfter = null;
+
+        do {
+            $payload = [
+                'size' => 250,
+                '_source' => [
+                    'periods',
+                    'periodLabels',
+                    'minPeriodFrom',
+                    'maxPeriodUntil',
+                    'timelineFrom',
+                    'timelineUntil',
+                    'timelineSource',
+                ],
+                'sort' => [['_id' => 'asc']],
+                'query' => [
+                    'match_all' => (object) [],
+                ],
+            ];
+
+            if ($searchAfter !== null) {
+                $payload['search_after'] = [$searchAfter];
+            }
+
+            try {
+                $response = Http::timeout(30)
+                    ->acceptJson()
+                    ->withBody(json_encode($payload, JSON_UNESCAPED_SLASHES), 'application/json')
+                    ->send('POST', $this->opensearchBaseUrl().'/'.$this->heritageIndex().'/_search');
+            } catch (ConnectionException $exception) {
+                throw new RuntimeException('OpenSearch is unreachable: '.$exception->getMessage(), previous: $exception);
+            }
+
+            if ($response->failed()) {
+                throw new RuntimeException('OpenSearch timeline scan failed: '.$response->body());
+            }
+
+            $hits = $response->json('hits.hits') ?? [];
+
+            foreach ($hits as $hit) {
+                $source = $hit['_source'] ?? [];
+                $source['id'] = $hit['_id'] ?? null;
+                $documents[] = $source;
+            }
+
+            $lastHit = end($hits);
+            $searchAfter = $lastHit['sort'][0] ?? null;
+        } while (! empty($hits));
+
+        return $documents;
+    }
+
+    /**
+     * @param  array<string, mixed>  $document
+     * @return list<array{uri: string, label: string, from: int|null, until: int|null}>
+     */
+    private function normalizeTimelinePeriods(array $document): array
+    {
+        $periods = [];
+        $rawPeriods = $document['periods'] ?? null;
+
+        if (is_array($rawPeriods)) {
+            foreach ($rawPeriods as $item) {
+                if (! is_array($item)) {
+                    continue;
+                }
+
+                $periods[] = [
+                    'uri' => (string) ($item['uri'] ?? ''),
+                    'label' => (string) ($item['label'] ?? ''),
+                    'from' => $this->toIntOrNull(isset($item['from']) ? (string) $item['from'] : null),
+                    'until' => $this->toIntOrNull(isset($item['until']) ? (string) $item['until'] : null),
+                ];
+            }
+        }
+
+        if ($periods !== []) {
+            return $periods;
+        }
+
+        $labels = $document['periodLabels'] ?? null;
+
+        if (! is_array($labels)) {
+            return [];
+        }
+
+        $fallback = [];
+
+        foreach ($labels as $index => $label) {
+            $text = trim((string) $label);
+
+            if ($text === '') {
+                continue;
+            }
+
+            $fallback[] = [
+                'uri' => 'periodLabel:'.$index,
+                'label' => $text,
+                'from' => null,
+                'until' => null,
+            ];
+        }
+
+        return $fallback;
     }
 }

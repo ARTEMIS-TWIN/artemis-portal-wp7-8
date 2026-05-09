@@ -33,10 +33,6 @@ export const mainNavigation = [
     name: 'ArtemisIA',
   },
   {
-    path: '/browse',
-    name: 'Browse',
-  },
-  {
     path: '/services',
     name: 'Services',
   },

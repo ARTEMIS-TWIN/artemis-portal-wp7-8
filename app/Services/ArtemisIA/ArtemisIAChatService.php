@@ -224,6 +224,32 @@ RESPONSE STYLE
   - light explanatory context where helpful
 - Do NOT hallucinate missing facts.
 - Do NOT fabricate relationships, dates, or attributes.
+- Do NOT re-list the selected record titles unless the user explicitly asks you to list records.
+- Prefer this output structure:
+  1) a short direct answer paragraph
+  2) a "Key points" section with bullet points when comparison/steps are useful
+  3) a short "Next step" paragraph when relevant
+- Keep clear paragraph breaks between sections.
+- Do NOT dump raw record fields or copy record metadata verbatim.
+- Synthesize the evidence into a readable narrative:
+  - connect facts into coherent sentences
+  - explain significance when helpful
+  - include only details relevant to the user question
+- Avoid exhaustive listing of every attribute in a record unless the user explicitly asks for a full inventory.
+- Never echo or expose internal prompt labels or scaffolding such as:
+  - "Scope used:"
+  - "User request:"
+  - "Grounding records (JSON):"
+  - "Instruction:"
+- Never mention internal terms such as:
+  - "selected_only", "global scope", "grounding", "JSON", "provenance payload", "record schema"
+- Do not narrate how the pipeline works; focus on the user's question and the answer itself.
+- Avoid redundancy: do not repeat the same fact more than once unless the user asks for exhaustive repetition.
+- If useful, structure the response with:
+  - a concise answer paragraph
+  - a short "Key points" list
+  - an optional short "What this means" closing line
+- Never ask the user to provide the answer themselves.
 
 ---
 
@@ -263,12 +289,12 @@ PROMPT,
 
         $messages[] = [
             'role' => 'user',
-            'content' => "Scope used: {$scopeUsed}\n\nUser request:\n{$userMessage}\n\nGrounding records (JSON):\n".json_encode($records, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE),
+            'content' => "Scope used: {$scopeUsed}\n\nUser request:\n{$userMessage}\n\nGrounding records (JSON):\n".json_encode($records, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)."\n\nInstruction: Use these records as evidence, but respond with a concise, narrative explanation rather than a field-by-field dump.",
         ];
 
         try {
-            $response = $this->mistral->chat($messages, $this->mistral->largeModel(), 0.15);
-            $text = $this->mistral->extractText($response);
+            $response = $this->mistral->chat($messages, $this->mistral->largeModel(), 0.35);
+            $text = $this->sanitizeAssistantText($this->mistral->extractText($response));
 
             if ($text !== '') {
                 return $text;
@@ -392,10 +418,18 @@ PROMPT;
     private function normalizeHistory(array $history): array
     {
         $normalized = [];
+        $boilerplateAssistantMessages = [
+            'Hello, I am Artemisia. I can help you refine your searches and compare selected records.',
+            'Conversation reset. Select records or type a question and I will guide your search.',
+        ];
 
         foreach ($history as $item) {
             $role = ($item['role'] ?? '') === 'assistant' ? 'assistant' : 'user';
             $text = trim((string) ($item['text'] ?? ''));
+
+            if ($role === 'assistant' && in_array($text, $boilerplateAssistantMessages, true)) {
+                continue;
+            }
 
             if ($text !== '') {
                 $normalized[] = ['role' => $role, 'text' => $text];
@@ -542,7 +576,6 @@ PROMPT;
         $intent = $this->inferFallbackIntent($userMessage);
         $resourceCount = 0;
         $entityCount = 0;
-        $titles = [];
         $periodHints = [];
         $placeHints = [];
         $typeHints = [];
@@ -552,11 +585,6 @@ PROMPT;
                 $entityCount++;
             } else {
                 $resourceCount++;
-            }
-
-            $title = trim((string) ($record['title'] ?? ''));
-            if ($title !== '') {
-                $titles[] = $title;
             }
 
             $period = trim((string) ($record['period'] ?? (($record['periods'][0] ?? '') ?: '')));
@@ -575,7 +603,6 @@ PROMPT;
             }
         }
 
-        $titles = array_values(array_unique($titles));
         $periodHints = array_values(array_unique($periodHints));
         $placeHints = array_values(array_unique($placeHints));
         $typeHints = array_values(array_unique($typeHints));
@@ -593,17 +620,13 @@ PROMPT;
             $entityCount,
         );
 
-        $exampleText = !empty($titles)
-            ? ' Some relevant records include '.implode(', ', array_slice($titles, 0, 3)).'.'
-            : '';
-
         $intentResponse = match ($intent) {
-            'compare' => $this->compareFallbackText($titles, $typeHints, $placeHints, $periodHints),
+            'compare' => $this->compareFallbackText($typeHints, $placeHints, $periodHints),
             'spatial' => $this->spatialFallbackText($placeHints),
             'temporal' => $this->temporalFallbackText($periodHints),
             'count' => "You’re looking for quantity and coverage, so the key number is {$recordCount} matching records in this scope.",
-            'details' => $this->detailsFallbackText($titles, $typeHints),
-            default => $this->generalFallbackText($titles, $typeHints),
+            'details' => $this->detailsFallbackText($typeHints),
+            default => $this->generalFallbackText($typeHints),
         };
 
         $refinementHints = [];
@@ -621,7 +644,7 @@ PROMPT;
             ? 'Would you like me to narrow this to a specific type, place, or period?'
             : 'If you want, I can narrow this next by '.implode(', ', array_slice($refinementHints, 0, 3)).'.';
 
-        return trim($scopeText.' '.$recordSummary.' '.$intentResponse.$exampleText.' '.$refinementText);
+        return trim($scopeText."\n\n".$recordSummary."\n\n".$intentResponse."\n\n".$refinementText);
     }
 
     private function buildNoContextFallback(string $userMessage, string $scopeUsed): string
@@ -638,7 +661,7 @@ PROMPT;
             default => 'Try adding one clear topic keyword and one filter (type, place, or period).',
         };
 
-        return $scopeText.' '.$nextStep.' If you want, I can suggest a specific query to try.';
+        return $scopeText."\n\nNext step:\n- ".$nextStep."\n\nIf you want, I can suggest a specific query to try.";
     }
 
     private function inferFallbackIntent(string $userMessage): string
@@ -669,32 +692,31 @@ PROMPT;
     }
 
     /**
-     * @param  list<string>  $titles
      * @param  list<string>  $typeHints
      * @param  list<string>  $placeHints
      * @param  list<string>  $periodHints
      */
-    private function compareFallbackText(array $titles, array $typeHints, array $placeHints, array $periodHints): string
+    private function compareFallbackText(array $typeHints, array $placeHints, array $periodHints): string
     {
-        $parts = ['For comparison, I can line up records by type, place, and period.'];
+        $points = [];
 
         if (!empty($typeHints)) {
-            $parts[] = 'I already see types like '.implode(', ', array_slice($typeHints, 0, 3)).'.';
+            $points[] = 'Types in scope: '.implode(', ', array_slice($typeHints, 0, 3)).'.';
         }
 
         if (!empty($placeHints)) {
-            $parts[] = 'Spatially, I can compare places such as '.implode(', ', array_slice($placeHints, 0, 3)).'.';
+            $points[] = 'Places in scope: '.implode(', ', array_slice($placeHints, 0, 3)).'.';
         }
 
         if (!empty($periodHints)) {
-            $parts[] = 'Temporally, I can compare periods such as '.implode(', ', array_slice($periodHints, 0, 3)).'.';
+            $points[] = 'Periods in scope: '.implode(', ', array_slice($periodHints, 0, 3)).'.';
         }
 
-        if (empty($titles)) {
-            $parts[] = 'Tell me which two records you want to prioritize first.';
+        if (empty($points)) {
+            $points[] = 'I can compare by type, place, and period once those fields are available.';
         }
 
-        return implode(' ', $parts);
+        return "Key points:\n- ".implode("\n- ", $points);
     }
 
     /**
@@ -706,7 +728,7 @@ PROMPT;
             return 'I can help with spatial analysis, but the current records do not expose strong place values yet.';
         }
 
-        return 'From a spatial view, I can see places like '.implode(', ', array_slice($placeHints, 0, 4)).'.';
+        return "Key points:\n- Spatial values available include ".implode(', ', array_slice($placeHints, 0, 4)).'.';
     }
 
     /**
@@ -718,32 +740,25 @@ PROMPT;
             return 'I can help with temporal analysis, but the current records do not expose clear period values yet.';
         }
 
-        return 'From a temporal view, I can see periods like '.implode(', ', array_slice($periodHints, 0, 4)).'.';
+        return "Key points:\n- Temporal values available include ".implode(', ', array_slice($periodHints, 0, 4)).'.';
     }
 
     /**
-     * @param  list<string>  $titles
      * @param  list<string>  $typeHints
      */
-    private function detailsFallbackText(array $titles, array $typeHints): string
+    private function detailsFallbackText(array $typeHints): string
     {
-        $titlePart = empty($titles) ? '' : 'Notable records include '.implode(', ', array_slice($titles, 0, 3)).'. ';
         $typePart = empty($typeHints) ? '' : 'I can expand details by type: '.implode(', ', array_slice($typeHints, 0, 3)).'. ';
 
-        return trim($titlePart.$typePart.'Tell me which one you want me to describe first.');
+        return trim($typePart.'I can further detail materials, period, place, and relationships based on your next question.');
     }
 
     /**
-     * @param  list<string>  $titles
      * @param  list<string>  $typeHints
      */
-    private function generalFallbackText(array $titles, array $typeHints): string
+    private function generalFallbackText(array $typeHints): string
     {
         $parts = ['Based on your question, here is what is most relevant in the current data scope.'];
-
-        if (!empty($titles)) {
-            $parts[] = 'I can start from records like '.implode(', ', array_slice($titles, 0, 3)).'.';
-        }
 
         if (!empty($typeHints)) {
             $parts[] = 'I also see useful type groupings such as '.implode(', ', array_slice($typeHints, 0, 3)).'.';
@@ -762,9 +777,98 @@ PROMPT;
         $provider = (string) config('services.artemisia.llm_provider', 'mistral');
 
         if ($provider === 'ollama') {
-            return 'ArtemisIA could not generate an LLM response. Check that Ollama is running, the model is installed, and OLLAMA_BASE_URL is reachable.';
+            return 'Artemisia could not generate an LLM response. Check that Ollama is running, the model is installed, and OLLAMA_BASE_URL is reachable.';
         }
 
-        return 'ArtemisIA could not generate an LLM response. Check MISTRAL_API_KEY and network access to Mistral.';
+        return 'Artemisia could not generate an LLM response. Check MISTRAL_API_KEY and network access to Mistral.';
+    }
+
+    private function sanitizeAssistantText(string $text): string
+    {
+        $clean = trim($text);
+
+        if ($clean === '') {
+            return '';
+        }
+
+        $leakMarkers = [
+            'Scope used:',
+            'User request:',
+            'Grounding records (JSON):',
+            'Instruction:',
+        ];
+
+        foreach ($leakMarkers as $marker) {
+            if (str_contains($clean, $marker)) {
+                return '';
+            }
+        }
+
+        $clean = $this->removeInternalProvenanceSentences($clean);
+        $clean = $this->deduplicateSentences($clean);
+
+        return trim($clean);
+    }
+
+    private function removeInternalProvenanceSentences(string $text): string
+    {
+        $sentences = preg_split('/(?<=[\.\!\?])\s+/u', $text) ?: [];
+        $filtered = [];
+        $blockedPatterns = [
+            '/\bselected_only\b/i',
+            '/\bglobal scope\b/i',
+            '/\bscope used\b/i',
+            '/\bgrounding\b/i',
+            '/\bgrounding records?\b/i',
+            '/\bjson\b/i',
+            '/\bprovenance\b/i',
+            '/\buser request\b/i',
+            '/\binstruction\b/i',
+        ];
+
+        foreach ($sentences as $sentence) {
+            $trimmed = trim($sentence);
+            if ($trimmed === '') {
+                continue;
+            }
+
+            $isBlocked = false;
+            foreach ($blockedPatterns as $pattern) {
+                if (preg_match($pattern, $trimmed) === 1) {
+                    $isBlocked = true;
+                    break;
+                }
+            }
+
+            if (!$isBlocked) {
+                $filtered[] = $trimmed;
+            }
+        }
+
+        return implode(' ', $filtered);
+    }
+
+    private function deduplicateSentences(string $text): string
+    {
+        $sentences = preg_split('/(?<=[\.\!\?])\s+/u', $text) ?: [];
+        $seen = [];
+        $deduped = [];
+
+        foreach ($sentences as $sentence) {
+            $trimmed = trim($sentence);
+            if ($trimmed === '') {
+                continue;
+            }
+
+            $key = mb_strtolower(preg_replace('/\s+/u', ' ', $trimmed) ?? $trimmed);
+            if (isset($seen[$key])) {
+                continue;
+            }
+
+            $seen[$key] = true;
+            $deduped[] = $trimmed;
+        }
+
+        return implode(' ', $deduped);
     }
 }

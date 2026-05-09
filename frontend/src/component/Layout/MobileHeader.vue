@@ -30,8 +30,21 @@
       <div v-show="show" class="mobile-menu">
         <div class="mobile-menu__backdrop" @click="toggle"></div>
         <div class="mobile-menu__inner">
+          <div class="mobile-menu-group">
+            <div class="mobile-menu-group__title">Search for...</div>
+            <b-link
+              v-for="item in searchLinks"
+              :key="item.path"
+              :to="item.path"
+              class="mobile-menu-link mobile-menu-link--nested"
+              :class="{ active: isActive(item.path) }"
+              @click="navigate(item.path)"
+            >
+              {{ item.name }}
+            </b-link>
+          </div>
           <b-link
-            v-for="item in generalModule.getMainNavigation"
+            v-for="item in primaryLinks"
             :key="item.path"
             :to="item.path"
             class="mobile-menu-link"
@@ -59,6 +72,15 @@ let show: boolean = $ref(false);
 let path: string = $ref('');
 const assets: string = $computed(() => generalModule.getAssetsDir);
 const logoSrc: string = $computed(() => `${assets}/artemis-logo.png`);
+const searchPaths = ['/search', '/heritage-entities', '/services'];
+
+const searchLinks = $computed(() => {
+  return generalModule.getMainNavigation.filter((item: any) => searchPaths.includes(item.path));
+});
+
+const primaryLinks = $computed(() => {
+  return generalModule.getMainNavigation.filter((item: any) => !searchPaths.includes(item.path));
+});
 
 const toggle = () => {
   show = !show;

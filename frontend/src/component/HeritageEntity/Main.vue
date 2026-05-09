@@ -60,7 +60,7 @@
     <section v-if="entity.encounterEvent" :class="sectionClass">
       <h3 class="text-lg font-bold mb-md">
         <i class="fas fa-project-diagram mr-sm" />
-        Archaeological Context
+        Provenance Context
       </h3>
 
       <div :class="itemClass" v-if="entity.encounterEvent.label">

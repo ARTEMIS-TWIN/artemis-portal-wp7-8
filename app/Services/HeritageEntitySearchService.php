@@ -85,6 +85,9 @@ class HeritageEntitySearchService
                 'hasWikidata',
                 'minPeriodFrom',
                 'maxPeriodUntil',
+                'timelineFrom',
+                'timelineUntil',
+                'timelineSource',
             ],
         ];
 
@@ -190,6 +193,110 @@ class HeritageEntitySearchService
             'owner' => $this->termsAggregation('ownerLabel'),
             'visualRepresentation' => $this->termsAggregation('visualRepresentationStatus'),
             'relatedDataResource' => $this->termsAggregation('relatedDataResourceStatus'),
+            'range_buckets' => $this->timelineBucketsAggregation(),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function timelineBucketsAggregation(): array
+    {
+        $currentYear = (int) date('Y');
+        $range = [-1000000, -100000, -10000, -1000, 0, 1000, 1250, 1500, 1750, $currentYear];
+
+        $intervalCount = count($range) - 1;
+        $defaultBucketCount = 50;
+        $bucketsPerInterval = $intervalCount > 1
+            ? (int) floor($defaultBucketCount / $intervalCount)
+            : $defaultBucketCount;
+
+        $filters = [];
+
+        for ($intervalIndex = 0; $intervalIndex < $intervalCount; $intervalIndex++) {
+            if ($intervalIndex === $intervalCount - 1) {
+                $bucketsPerInterval += $defaultBucketCount % $intervalCount;
+            }
+
+            $startYear = $range[$intervalIndex];
+            $endYear = $range[$intervalIndex + 1];
+            $delta = ($endYear - $startYear) / $bucketsPerInterval;
+            $currentStartYear = $startYear;
+
+            for ($bucketIndex = 0; $bucketIndex < $bucketsPerInterval; $bucketIndex++) {
+                $rangeStartYear = (int) round($currentStartYear);
+                $rangeEndYear = (int) round($currentStartYear + $delta);
+
+                $filters[$rangeStartYear.':'.$rangeEndYear] = [
+                    'bool' => [
+                        'should' => [
+                            // Full chronology overlap (range intersects timeline bucket).
+                            [
+                                'bool' => [
+                                    'must' => [
+                                        ['range' => ['timelineUntil' => ['gte' => $rangeStartYear]]],
+                                        ['range' => ['timelineFrom' => ['lte' => $rangeEndYear]]],
+                                    ],
+                                ],
+                            ],
+                            // Preferred timeline source with only lower bound available.
+                            [
+                                'range' => [
+                                    'timelineFrom' => [
+                                        'gte' => $rangeStartYear,
+                                        'lte' => $rangeEndYear,
+                                    ],
+                                ],
+                            ],
+                            // Preferred timeline source with only upper bound available.
+                            [
+                                'range' => [
+                                    'timelineUntil' => [
+                                        'gte' => $rangeStartYear,
+                                        'lte' => $rangeEndYear,
+                                    ],
+                                ],
+                            ],
+                            // Legacy chronology overlap (range intersects timeline bucket).
+                            [
+                                'bool' => [
+                                    'must' => [
+                                        ['range' => ['maxPeriodUntil' => ['gte' => $rangeStartYear]]],
+                                        ['range' => ['minPeriodFrom' => ['lte' => $rangeEndYear]]],
+                                    ],
+                                ],
+                            ],
+                            // Fallback when only "from" is available.
+                            [
+                                'range' => [
+                                    'minPeriodFrom' => [
+                                        'gte' => $rangeStartYear,
+                                        'lte' => $rangeEndYear,
+                                    ],
+                                ],
+                            ],
+                            // Fallback when only "until" is available.
+                            [
+                                'range' => [
+                                    'maxPeriodUntil' => [
+                                        'gte' => $rangeStartYear,
+                                        'lte' => $rangeEndYear,
+                                    ],
+                                ],
+                            ],
+                        ],
+                        'minimum_should_match' => 1,
+                    ],
+                ];
+
+                $currentStartYear += $delta;
+            }
+        }
+
+        return [
+            'filters' => [
+                'filters' => $filters,
+            ],
         ];
     }
 

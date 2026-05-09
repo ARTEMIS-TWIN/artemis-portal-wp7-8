@@ -4,10 +4,6 @@ import { breadCrumbModule } from "@/store/modules";
 
 // components
 import About from './component/About.vue';
-import Browse from './component/Browse.vue';
-import BrowseWhat from './component/BrowseWhat.vue';
-import BrowseWhen from './component/BrowseWhen.vue';
-import BrowseWhere from './component/BrowseWhere.vue';
 import ArtemisIA from './component/ArtemisIA.vue';
 import NotFound from './component/NotFound.vue';
 import Resource from './component/Resource.vue';
@@ -126,38 +122,6 @@ const router = createRouter({
       meta: {
         title: 'Service',
         description: 'Service detail',
-      }
-    },
-    {
-      path: '/browse',
-      component: Browse,
-      meta: {
-        title: 'Browse',
-        description: 'Browse'
-      }
-    },
-    {
-      path: '/browse/when',
-      component: BrowseWhen,
-      meta: {
-        title: 'Browse / When',
-        description: 'Browse when'
-      }
-    },
-    {
-      path: '/browse/where',
-      component: BrowseWhere,
-      meta: {
-        title: 'Browse / Where',
-        description: 'Browse where'
-      }
-    },
-    {
-      path: '/browse/what',
-      component: BrowseWhat,
-      meta: {
-        title: 'Browse / What',
-        description: 'Browse what'
       }
     },
     {

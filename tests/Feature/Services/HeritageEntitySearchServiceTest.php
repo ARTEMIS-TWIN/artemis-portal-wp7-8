@@ -73,4 +73,40 @@ class HeritageEntitySearchServiceTest extends TestCase
             ],
         ], $capturedPayload['query']['bool']['filter']);
     }
+
+    public function test_aggregation_payload_includes_timeline_overlap_and_single_bound_fallbacks(): void
+    {
+        $capturedPayload = null;
+
+        Http::fake(function (ClientRequest $request) use (&$capturedPayload) {
+            $this->assertStringEndsWith('/artemis_heritage_entities/_search', $request->url());
+
+            $capturedPayload = json_decode($request->body(), true, flags: JSON_THROW_ON_ERROR);
+
+            return Http::response([
+                'hits' => [
+                    'total' => ['value' => 0, 'relation' => 'eq'],
+                    'hits' => [],
+                ],
+                'aggregations' => [
+                    'range_buckets' => ['buckets' => []],
+                ],
+            ]);
+        });
+
+        app(HeritageEntitySearchService::class)->getSearchAggregationData(
+            Request::create('/api/heritage-entities/aggregations', 'GET', [])
+        );
+
+        $this->assertIsArray($capturedPayload);
+        $this->assertArrayHasKey('aggregations', $capturedPayload);
+        $this->assertArrayHasKey('range_buckets', $capturedPayload['aggregations']);
+
+        $filters = $capturedPayload['aggregations']['range_buckets']['filters']['filters'] ?? [];
+        $this->assertNotEmpty($filters);
+
+        $firstFilter = array_values($filters)[0];
+        $this->assertSame(1, $firstFilter['bool']['minimum_should_match'] ?? null);
+        $this->assertCount(6, $firstFilter['bool']['should'] ?? []);
+    }
 }
