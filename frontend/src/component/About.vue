@@ -7,7 +7,7 @@
     <h2 class="text-lg mb-md">ARTEMIS Objectives</h2>
     <p class="mb-md">A further development of this concept that ARTEMIS will address is the Reactive Heritage Digital Twin (RHDT) which will enable heritage professionals to forecast the consequences of real-life events via sensors and other information collected automatically from other systems, or resulting from computer modelled experiments. Most importantly, the digital twin technology will allow researchers and conservators to conduct virtual experiments and simulations, testing various conservation methods and their potential impact without risking damage to the actual heritage assets. This will revolutionise conservation practises as it will lead to better, non-invasive interventions.</p>
     <p class="mb-3x">Over the next three years, ARTEMIS will:</p>
-      <ul>
+      <ul class="list-disc pl-lg space-y-sm mb-3x">
         <li>develop the cloud-based digital infrastructure that will enable the digital data from different sources to be connected together,</li>
         <li>create and integrate the necessary tools and services for gathering data, performing experiments, etc.</li>
         <li>develop 3D and VR technologies that also benefit the public,</li>

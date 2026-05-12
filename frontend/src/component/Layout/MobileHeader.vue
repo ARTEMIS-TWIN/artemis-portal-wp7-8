@@ -37,7 +37,7 @@
               :key="item.path"
               :to="item.path"
               class="mobile-menu-link mobile-menu-link--nested"
-              :class="{ active: isActive(item.path) }"
+              :class="{ active: item.path && isActive(item.path) }"
               @click="navigate(item.path)"
             >
               {{ item.name }}
@@ -48,7 +48,7 @@
             :key="item.path"
             :to="item.path"
             class="mobile-menu-link"
-            :class="{ active: isActive(item.path) }"
+            :class="{ active: item.path && isActive(item.path) }"
             @click="navigate(item.path)"
           >
             {{ item.name }}
@@ -91,7 +91,11 @@ const navigate = (path: string) => {
   show = false;
 }
 
-const isActive = (itemPath: string): boolean => {
+const isActive = (itemPath?: string): boolean => {
+  if (!itemPath) {
+    return false;
+  }
+
   return path.includes(itemPath) ||
     (itemPath.includes('search') && path.includes('resource'));
 }

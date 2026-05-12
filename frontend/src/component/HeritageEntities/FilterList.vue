@@ -29,7 +29,7 @@ import { $computed } from 'vue/macros';
 import { heritageEntityAggregationModule, heritageEntitySearchModule } from '@/store/modules';
 import HeritageEntityAggregation from './Aggregation.vue';
 import HeritageEntitiesMap from './Map.vue';
-import HeritageEntitiesTimeLine from './TimeLine.vue';
+import HeritageEntitiesTimeLine from '../Filter/TimeLine.vue';
 import HeritageEntitySearchInput from './SearchInput.vue';
 
 const sortedAggs = $computed(() => heritageEntityAggregationModule.getSorted);

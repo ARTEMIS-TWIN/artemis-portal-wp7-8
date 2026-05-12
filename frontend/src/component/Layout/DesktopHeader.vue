@@ -24,7 +24,7 @@
               :key="item.path"
               :to="item.path"
               class="portal-nav__search-link"
-              :class="[getSearchButtonClass(index), { active: isActive(item.path) }]"
+              :class="[getSearchButtonClass(index), { active: item.path && isActive(item.path) }]"
             >
               {{ item.name }}
             </b-link>
@@ -70,13 +70,17 @@ const primaryLinks = $computed(() => {
   return generalModule.getMainNavigation.filter((item: any) => !item.path || !searchPaths.includes(item.path));
 });
 
-const isActive = (itemPath: string): boolean => {
+const isActive = (itemPath?: string): boolean => {
+  if (!itemPath) {
+    return false;
+  }
+
   return path.includes(itemPath) ||
     (itemPath.includes('search') && path.includes('resource'));
 }
 
 const isSearchGroupActive = $computed(() => {
-  return searchLinks.some((item: any) => isActive(item.path));
+  return searchLinks.some((item: any) => item.path && isActive(item.path));
 });
 
 const getSearchButtonClass = (index: number): string => {
