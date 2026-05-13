@@ -4,7 +4,7 @@ import { breadCrumbModule } from "@/store/modules";
 
 // components
 import About from './component/About.vue';
-import ArtemisIA from './component/ArtemisIA.vue';
+import Artemisia from './component/Artemisia.vue';
 import NotFound from './component/NotFound.vue';
 import Resource from './component/Resource.vue';
 import Subject from './component/Subject.vue';
@@ -93,7 +93,7 @@ const router = createRouter({
     },
     {
       path: '/artemisia',
-      component: ArtemisIA,
+      component: Artemisia,
       meta: {
         title: 'Artemisia',
         description: 'AI search assistant',

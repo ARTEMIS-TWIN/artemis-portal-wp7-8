@@ -16,7 +16,7 @@
       <layout-footer />
     </div>
 
-    <ArtemisIAFloating />
+    <ArtemisiaFloating />
     <help-loader />
   </div>
 </template>
@@ -27,7 +27,7 @@ import { generalModule } from "@/store/modules";
 import LayoutMobileHeader from './component/Layout/MobileHeader.vue';
 import LayoutDesktopHeader from './component/Layout/DesktopHeader.vue';
 import LayoutFooter from './component/Layout/Footer.vue';
-import ArtemisIAFloating from './component/ArtemisIA/Floating.vue';
+import ArtemisiaFloating from './component/Artemisia/Floating.vue';
 import HelpLoader from './component/Help/Loader.vue';
 import '../static/fa/css/all.min.css';
 import 'leaflet/dist/leaflet.css';

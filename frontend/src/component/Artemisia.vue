@@ -8,11 +8,11 @@
         </p>
       </div>
 
-      <ArtemisIAAssistant mode="page" />
+      <ArtemisiaAssistant mode="page" />
     </section>
   </div>
 </template>
 
 <script setup lang="ts">
-import ArtemisIAAssistant from './ArtemisIA/Assistant.vue';
+import ArtemisiaAssistant from './Artemisia/Assistant.vue';
 </script>

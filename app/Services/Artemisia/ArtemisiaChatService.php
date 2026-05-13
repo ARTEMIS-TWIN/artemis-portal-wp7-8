@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\ArtemisIA;
+namespace App\Services\Artemisia;
 
 use App\Services\HeritageEntitySearchService;
 use App\Services\PortalSearchService;
@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use RuntimeException;
 
-class ArtemisIAChatService
+class ArtemisiaChatService
 {
     private const SESSION_CACHE_PREFIX = 'artemisia:session:';
 

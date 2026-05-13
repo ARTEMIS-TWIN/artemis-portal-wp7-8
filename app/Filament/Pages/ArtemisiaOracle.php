@@ -4,7 +4,7 @@ namespace App\Filament\Pages;
 
 use Filament\Pages\Page;
 
-class ArtemisIAOracle extends Page
+class ArtemisiaOracle extends Page
 {
     protected string $view = 'filament.pages.artemis-i-a-oracle';
 

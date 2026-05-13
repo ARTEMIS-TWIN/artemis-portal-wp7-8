@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\ArtemisIA;
+namespace App\Services\Artemisia;
 
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Arr;

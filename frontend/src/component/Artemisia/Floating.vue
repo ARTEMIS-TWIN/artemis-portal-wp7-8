@@ -7,7 +7,7 @@
         @wheel.stop
         @touchmove.stop
       >
-        <ArtemisIAAssistant mode="floating" />
+        <ArtemisiaAssistant mode="floating" />
       </div>
     </transition>
 
@@ -25,7 +25,7 @@
 import { $computed } from 'vue/macros';
 import { useRoute } from 'vue-router';
 import { artemisIAModule } from '@/store/modules';
-import ArtemisIAAssistant from './Assistant.vue';
+import ArtemisiaAssistant from './Assistant.vue';
 
 const route = useRoute();
 

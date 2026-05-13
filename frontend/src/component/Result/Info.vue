@@ -12,7 +12,7 @@
       v-if="selectedCount"
       type="button"
       class="artemisia-suggestion mt-md"
-      @click="useArtemisIA()"
+      @click="useArtemisia()"
     >
       <i class="fas fa-robot mr-sm"></i>
       Ask Artemisia with {{ selectedCount }} selected
@@ -106,7 +106,7 @@ const removeFilter = (filter: iKeyVal) => {
   });
 };
 
-const useArtemisIA = () => {
+const useArtemisia = () => {
   artemisIAModule.useSelectionContext();
 };
 </script>
