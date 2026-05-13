@@ -15,7 +15,7 @@
       @click="useArtemisIA()"
     >
       <i class="fas fa-robot mr-sm"></i>
-      Ask ArtemisIA with {{ selectedCount }} selected
+      Ask Artemisia with {{ selectedCount }} selected
     </button>
 
     <div v-if="activeFilters.length">

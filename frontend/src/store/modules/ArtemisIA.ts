@@ -23,7 +23,7 @@ export class ArtemisIAModule {
     {
       id: 1,
       role: 'assistant',
-      text: 'Hello, I am ArtemisIA. I can help you refine your searches and compare selected records.',
+      text: 'Hello, I am Artemisia. I can help you refine your searches and compare selected records.',
       ts: Date.now(),
     },
   ];
@@ -153,7 +153,7 @@ export class ArtemisIAModule {
       this.messages.push({
         id: this.nextMessageId++,
         role: 'assistant',
-        text: backendMessage || 'ArtemisIA is temporarily unavailable. Please check configuration and try again.',
+        text: backendMessage || 'Artemisia is temporarily unavailable. Please check configuration and try again.',
         ts: Date.now(),
       });
     } finally {

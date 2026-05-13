@@ -30,7 +30,7 @@ export const mainNavigation = [
   },
   {
     path: '/artemisia',
-    name: 'ArtemisIA',
+    name: 'Artemisia',
   },
   {
     path: '/services',

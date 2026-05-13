@@ -70,7 +70,11 @@ const primaryLinks = $computed(() => {
   return generalModule.getMainNavigation.filter((item: any) => !item.path || !searchPaths.includes(item.path));
 });
 
-const isActive = (itemPath: string): boolean => {
+const isActive = (itemPath?: string): boolean => {
+  if (!itemPath) {
+    return false;
+  }
+
   return path.includes(itemPath) ||
     (itemPath.includes('search') && path.includes('resource'));
 }

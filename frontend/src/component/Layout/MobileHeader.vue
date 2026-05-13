@@ -45,11 +45,12 @@
           </div>
           <b-link
             v-for="item in primaryLinks"
-            :key="item.path"
+            :key="item.path || item.href"
             :to="item.path"
+            :href="item.href"
             class="mobile-menu-link"
-            :class="{ active: isActive(item.path) }"
-            @click="navigate(item.path)"
+            :class="{ active: item.path && isActive(item.path) }"
+            @click="handleMenuItemClick(item)"
           >
             {{ item.name }}
           </b-link>
@@ -91,7 +92,15 @@ const navigate = (path: string) => {
   show = false;
 }
 
-const isActive = (itemPath: string): boolean => {
+const handleMenuItemClick = (item: any) => {
+  show = false;
+};
+
+const isActive = (itemPath?: string): boolean => {
+  if (!itemPath) {
+    return false;
+  }
+
   return path.includes(itemPath) ||
     (itemPath.includes('search') && path.includes('resource'));
 }

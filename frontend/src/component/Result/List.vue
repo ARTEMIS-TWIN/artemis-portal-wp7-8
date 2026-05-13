@@ -24,7 +24,7 @@
           >
           <span class="artemisia-select__label">
             <i class="fas fa-robot mr-xs"></i>
-            Ask ArtemisIA
+            Ask Artemisia
           </span>
         </label>
 

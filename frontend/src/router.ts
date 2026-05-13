@@ -95,7 +95,7 @@ const router = createRouter({
       path: '/artemisia',
       component: ArtemisIA,
       meta: {
-        title: 'ArtemisIA',
+        title: 'Artemisia',
         description: 'AI search assistant',
       }
     },

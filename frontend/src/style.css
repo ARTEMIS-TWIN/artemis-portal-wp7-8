@@ -1412,6 +1412,39 @@ input::placeholder, textarea::placeholder {
   max-width: 16rem;
 }
 
+.artemisia-context__chip--resource {
+  background: linear-gradient(135deg, #0b1b33 0%, #1a3765 100%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18), 0 4px 10px rgba(10, 31, 58, 0.18);
+}
+
+.artemisia-context__chip--heritage {
+  background: linear-gradient(135deg, #315a87 0%, #4b7ba4 100%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2), 0 4px 10px rgba(10, 31, 58, 0.14);
+}
+
+.artemisia-context__chip--resource .artemisia-context__chip-link,
+.artemisia-context__chip--heritage .artemisia-context__chip-link {
+  color: #ffffff;
+}
+
+.artemisia-context__chip--resource .artemisia-context__chip-link:hover,
+.artemisia-context__chip--heritage .artemisia-context__chip-link:hover {
+  color: #ffffff;
+  text-decoration: underline;
+}
+
+.artemisia-context__chip--resource .artemisia-context__chip-remove,
+.artemisia-context__chip--heritage .artemisia-context__chip-remove {
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+}
+
+.artemisia-context__chip--resource .artemisia-context__chip-remove:hover,
+.artemisia-context__chip--heritage .artemisia-context__chip-remove:hover {
+  background: rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+}
+
 .artemisia-context__chip-link {
   color: var(--brand-text);
   text-decoration: none;
@@ -1538,6 +1571,7 @@ input::placeholder, textarea::placeholder {
   padding: 0.64rem 0.8rem;
   line-height: 1.5;
   font-size: 1.02rem;
+  white-space: pre-line;
 }
 
 .artemisia-msg--assistant {

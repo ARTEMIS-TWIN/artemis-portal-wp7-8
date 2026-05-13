@@ -6,7 +6,7 @@
         </p>
 
         <p style="margin-bottom: 28px;">
-            <strong>ArtemisIA Oracle</strong> is an AI-assisted pipeline designed to transform
+            <strong>Artemisia Oracle</strong> is an AI-assisted pipeline designed to transform
             unstructured cultural heritage documentation into structured, ontology-aligned knowledge.
         </p>
 

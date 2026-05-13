@@ -4,7 +4,7 @@
       <aside class="artemisia-shell__sidebar">
         <div class="artemisia-shell__title-wrap">
           <i class="fas fa-robot"></i>
-          <h2 class="artemisia-shell__title">ArtemisIA</h2>
+          <h2 class="artemisia-shell__title">Artemisia</h2>
         </div>
         <p class="artemisia-shell__subtitle">
           Your AI assistant for discovery. Pick a starter prompt or write your own question.
@@ -46,7 +46,7 @@
             <div
               v-for="item in selectedPreview"
               :key="`${item.type}-${item.id}`"
-              class="artemisia-context__chip"
+              :class="['artemisia-context__chip', getSelectedChipTypeClass(item)]"
             >
               <a
                 class="artemisia-context__chip-link"
@@ -95,7 +95,7 @@
           </div>
 
           <div v-if="artemisIAModule.typing" class="artemisia-msg artemisia-msg--assistant">
-            ArtemisIA is typing...
+            Artemisia is typing...
           </div>
         </div>
 
@@ -105,7 +105,7 @@
             :value="artemisIAModule.draft"
             class="artemisia-shell__input"
             rows="2"
-            placeholder="Ask ArtemisIA to refine your search..."
+            placeholder="Ask Artemisia to refine your search..."
             @input="artemisIAModule.setDraft(($event.target as HTMLTextAreaElement).value)"
             @keydown.enter.exact.prevent="submit()"
           />
@@ -121,7 +121,7 @@
       <div class="artemisia-shell__header">
         <div class="artemisia-shell__title-wrap">
           <i class="fas fa-robot"></i>
-          <h2 class="artemisia-shell__title">ArtemisIA</h2>
+          <h2 class="artemisia-shell__title">Artemisia</h2>
         </div>
         <div class="artemisia-shell__header-actions">
           <button
@@ -147,7 +147,7 @@
           <div
             v-for="item in selectedPreview"
             :key="`${item.type}-${item.id}`"
-            class="artemisia-context__chip"
+            :class="['artemisia-context__chip', getSelectedChipTypeClass(item)]"
           >
             <a
               class="artemisia-context__chip-link"
@@ -188,7 +188,7 @@
         </div>
 
         <div v-if="artemisIAModule.typing" class="artemisia-msg artemisia-msg--assistant">
-          ArtemisIA is typing...
+          Artemisia is typing...
         </div>
       </div>
 
@@ -198,7 +198,7 @@
           :value="artemisIAModule.draft"
           class="artemisia-shell__input"
           rows="2"
-          placeholder="Ask ArtemisIA to refine your search..."
+          placeholder="Ask Artemisia to refine your search..."
           @input="artemisIAModule.setDraft(($event.target as HTMLTextAreaElement).value)"
           @keydown.enter.exact.prevent="submit()"
         />
@@ -308,6 +308,12 @@ const getSelectedRecordHref = (item: { id: string, type: string }) => {
     : `resource/${item.id}`;
 
   return `${normalizedBase}${routePath}`;
+};
+
+const getSelectedChipTypeClass = (item: { type?: string }) => {
+  return item?.type === 'heritage-entity'
+    ? 'artemisia-context__chip--heritage'
+    : 'artemisia-context__chip--resource';
 };
 
 const removeSelected = (item: any) => {
