@@ -1580,6 +1580,62 @@ input::placeholder, textarea::placeholder {
   box-shadow: 0 4px 12px rgba(10, 31, 58, 0.07);
 }
 
+.artemisia-msg__structured {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.artemisia-msg__section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.38rem;
+}
+
+.artemisia-msg__section + .artemisia-msg__section {
+  border-top: 1px solid rgba(31, 82, 134, 0.16);
+  padding-top: 0.6rem;
+  margin-top: 0.15rem;
+}
+
+.artemisia-msg__section-title {
+  margin: 0;
+  font-size: 0.93rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  color: #17395f;
+}
+
+.artemisia-msg__paragraph {
+  margin: 0;
+}
+
+.artemisia-msg__bullets {
+  margin: 0.08rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.34rem;
+  list-style: none;
+}
+
+.artemisia-msg__bullet {
+  position: relative;
+  padding-left: 1.05rem;
+}
+
+.artemisia-msg__bullet::before {
+  content: "";
+  position: absolute;
+  left: 0.22rem;
+  top: 0.58rem;
+  width: 0.42rem;
+  height: 0.42rem;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #1f5286 0%, #5d84b0 100%);
+  box-shadow: 0 0 0 2px rgba(31, 82, 134, 0.12);
+}
+
 .artemisia-msg--user {
   align-self: flex-end;
   background: #0f2e52;

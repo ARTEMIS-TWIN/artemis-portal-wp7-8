@@ -1019,15 +1019,24 @@ SPARQL;
      */
     private function targetClassUris(): array
     {
+        $fallbacks = [
+            'https://www.artemis-twin.eu/ontology/rhdto/HC3_Tangible_Heritage',
+            'https://www.artemis-twin.eu/ontology/rhdto/HC3_Tangible_Entity',
+            'http://vast-lab.org/rhdto/HC3_Tangible_Heritage',
+            'http://vast-lab.org/rhdto/HC3_Tangible_Entity',
+        ];
+
         $configured = (string) env(
             'GRAPHDB_HERITAGE_ENTITY_CLASS_URI',
-            'https://www.artemis-twin.eu/ontology/rhdto/HC3_Tangible_Heritage,https://www.artemis-twin.eu/ontology/rhdto/HC3_Tangible_Entity'
+            implode(',', $fallbacks)
         );
 
-        return array_values(array_filter(array_map(
+        $configuredUris = array_values(array_filter(array_map(
             static fn (string $item): string => trim($item),
             explode(',', $configured),
         )));
+
+        return array_values(array_unique(array_merge($configuredUris, $fallbacks)));
     }
 
     private function opensearchBaseUrl(): string
