@@ -24,7 +24,7 @@
               :key="item.path"
               :to="item.path"
               class="portal-nav__search-link"
-              :class="[getSearchButtonClass(index), { active: isActive(item.path) }]"
+              :class="[getSearchButtonClass(index), { active: item.path && isActive(item.path) }]"
             >
               {{ item.name }}
             </b-link>
@@ -80,7 +80,7 @@ const isActive = (itemPath?: string): boolean => {
 }
 
 const isSearchGroupActive = $computed(() => {
-  return searchLinks.some((item: any) => isActive(item.path));
+  return searchLinks.some((item: any) => item.path && isActive(item.path));
 });
 
 const getSearchButtonClass = (index: number): string => {

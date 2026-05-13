@@ -3,7 +3,7 @@
     <div class="portal-footer__content">
       <div>
         <p>
-          © {{ new Date().getFullYear() }} ARTEMIS Data Infrastructure. Built on OpenSearch and the ARIADNE GraphDB federation.
+          © {{ new Date().getFullYear() }} ARTEMIS Data Infrastructure. 
         </p>
         <p>
           Powered by the ARTEMIS and ARIADNE collaboration for archaeological and heritage science data discovery.

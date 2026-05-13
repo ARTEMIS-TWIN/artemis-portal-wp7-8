@@ -31,7 +31,7 @@
         </x-filament::button>
 
         <x-filament::button color="gray">
-            Download .ttl
+            Download TTL
         </x-filament::button>
     </div>
 </div>

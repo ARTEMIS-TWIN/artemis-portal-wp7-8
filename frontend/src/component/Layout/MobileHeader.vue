@@ -37,7 +37,7 @@
               :key="item.path"
               :to="item.path"
               class="mobile-menu-link mobile-menu-link--nested"
-              :class="{ active: isActive(item.path) }"
+              :class="{ active: item.path && isActive(item.path) }"
               @click="navigate(item.path)"
             >
               {{ item.name }}
@@ -95,7 +95,6 @@ const navigate = (path: string) => {
 const handleMenuItemClick = (item: any) => {
   show = false;
 };
-
 const isActive = (itemPath?: string): boolean => {
   if (!itemPath) {
     return false;
