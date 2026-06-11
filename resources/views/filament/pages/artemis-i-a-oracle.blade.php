@@ -41,6 +41,7 @@
                     type="file"
                     accept=".pdf,.txt,.doc,.docx"
                     style="display: none;"
+                    wire:model="uploadedDocument"
                     x-on:change="uploadedFileName = $event.target.files[0]?.name"
                 >
 
@@ -108,7 +109,11 @@
                     </thead>
 
                     <tbody>
-                        @foreach ($data['entities'] as $entity)
+                        @php
+                            $entities = $extractedEntities !== [] ? $extractedEntities : ($data['entities'] ?? []);
+                        @endphp
+
+                        @forelse ($entities as $entity)
                             <tr style="border-bottom: 1px solid #1f2937;">
                                 <td style="padding: 10px;">{{ $entity['label'] }}</td>
                                 <td style="padding: 10px; color: #9ca3af;">{{ $entity['suggested_class'] }}</td>
@@ -131,7 +136,13 @@
                                     @endif
                                 </td>
                             </tr>
-                        @endforeach
+                        @empty
+                            <tr style="border-bottom: 1px solid #1f2937;">
+                                <td colspan="4" style="padding: 10px; color: #9ca3af;">
+                                    No extracted entities are available yet.
+                                </td>
+                            </tr>
+                        @endforelse
                     </tbody>
                 </table>
             </div>
