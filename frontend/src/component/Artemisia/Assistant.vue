@@ -380,6 +380,7 @@ const normalizeAssistantText = (text: string): string => {
   return text
     .replace(/\r\n/g, '\n')
     .replace(/\s+(Key points:|Next step:|What this means:|Summary:|Overview:)/gi, '\n\n$1')
+    .replace(/([:;.!?])\s+(?=(?:[-*•]|\d+\.)\s)/g, '$1\n')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
 };

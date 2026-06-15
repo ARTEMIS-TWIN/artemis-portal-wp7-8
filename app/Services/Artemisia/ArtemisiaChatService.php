@@ -197,15 +197,20 @@ You will receive context in two possible forms:
 RULES FOR USING CONTEXT
 
 1. If SELECTED RECORDS are provided:
-   - Use ONLY the information from those selected records.
-   - Do NOT use outside knowledge unless the user explicitly asks for it.
+   - Treat them as the default context for ordinary questions.
+   - Interpret references like "this record", "these records", "it", and "they" as referring to the selected records unless the user says otherwise.
+   - Use ONLY the selected records unless the user explicitly asks for broader database or portal coverage.
    - If the answer is not contained in the selected records, say so clearly.
 
 2. If NO records are selected:
    - Use the DATABASE CONTEXT provided.
    - If the database does not contain sufficient information, say so.
 
-3. External knowledge:
+3. If the user explicitly asks for the whole database, all records, the broader portal, or "not just the selected records":
+   - Switch to DATABASE CONTEXT even when selected records exist.
+   - Use the broader database results as the main evidence for the answer.
+
+4. External knowledge:
    - You may use general background knowledge ONLY to:
      - clarify
      - explain
@@ -223,6 +228,8 @@ RESPONSE STYLE
 - Start with the direct answer, then add explanation, reasoning, examples, or context in a logical progression.
 - Be informative without being verbose: give enough detail to satisfy the question, but avoid filler, repetition, and generic motivational language.
 - Sound intelligent but conversational: write naturally, avoid robotic phrasing, and use bullets only when they improve readability.
+- When the answer has multiple points, use a short opening paragraph followed by clearly separated bullet points.
+- Put each bullet on its own line beginning with "- " and avoid compressing bullets into one continuous paragraph.
 - Demonstrate reasoning by comparing alternatives, explaining trade-offs, and justifying recommendations.
 - Be technically accurate: prefer precise terminology, state uncertainty when appropriate, and do not invent facts.
 - Optimize readability with short paragraphs, varied sentence length, and clear conclusions.
@@ -244,6 +251,7 @@ RESPONSE STYLE
 - Use exact section labels like "Key points:", "Next step:", or "What this means:" when they help readability.
 - Use bullet points for lists, contrasts, examples, and step-by-step guidance, but do not overuse them when prose is clearer.
 - Keep each bullet to one main idea.
+- Keep list items visually distinct; never merge multiple bullets into a single paragraph.
 - Keep paragraphs short and easy to skim.
 - Separate sections with blank lines.
 - Do NOT dump raw record fields or copy record metadata verbatim.
@@ -369,6 +377,11 @@ Scope types:
      - "more broadly"
      - "outside the database"
      - "not just these items"
+     - "the whole database"
+     - "all records"
+     - "all data"
+     - "the entire portal"
+     - "broader database view"
 
 IMPORTANT:
 - Both flags can be false
@@ -418,7 +431,20 @@ PROMPT;
 
         $lower = Str::lower($userMessage);
 
-        $globalHints = ['search all', 'all records', 'ignore selected', 'outside selected', 'whole database', 'global search'];
+        $globalHints = [
+            'search all',
+            'all records',
+            'all data',
+            'ignore selected',
+            'outside selected',
+            'outside the selected records',
+            'whole database',
+            'entire database',
+            'entire portal',
+            'global search',
+            'broader database',
+            'not just these items',
+        ];
         $selectedHints = ['selected records', 'selected items', 'only these records', 'just selected', 'only selected'];
 
         return [
@@ -822,14 +848,15 @@ PROMPT;
         }
 
         $clean = $this->removeInternalProvenanceSentences($clean);
-        $clean = $this->deduplicateSentences($clean);
+        $clean = preg_replace("/[ \t]+\n/u", "\n", $clean) ?? $clean;
+        $clean = preg_replace("/\n{3,}/u", "\n\n", $clean) ?? $clean;
 
         return trim($clean);
     }
 
     private function removeInternalProvenanceSentences(string $text): string
     {
-        $sentences = preg_split('/(?<=[\.\!\?])\s+/u', $text) ?: [];
+        $lines = preg_split('/\R/u', $text) ?: [];
         $filtered = [];
         $blockedPatterns = [
             '/\bselected_only\b/i',
@@ -843,9 +870,10 @@ PROMPT;
             '/\binstruction\b/i',
         ];
 
-        foreach ($sentences as $sentence) {
-            $trimmed = trim($sentence);
+        foreach ($lines as $line) {
+            $trimmed = trim($line);
             if ($trimmed === '') {
+                $filtered[] = '';
                 continue;
             }
 
@@ -858,34 +886,26 @@ PROMPT;
             }
 
             if (!$isBlocked) {
-                $filtered[] = $trimmed;
+                $filtered[] = rtrim($line);
             }
         }
 
-        return implode(' ', $filtered);
-    }
+        $output = [];
+        $previousBlank = false;
 
-    private function deduplicateSentences(string $text): string
-    {
-        $sentences = preg_split('/(?<=[\.\!\?])\s+/u', $text) ?: [];
-        $seen = [];
-        $deduped = [];
-
-        foreach ($sentences as $sentence) {
-            $trimmed = trim($sentence);
-            if ($trimmed === '') {
+        foreach ($filtered as $line) {
+            if ($line === '') {
+                if (!$previousBlank) {
+                    $output[] = '';
+                }
+                $previousBlank = true;
                 continue;
             }
 
-            $key = mb_strtolower(preg_replace('/\s+/u', ' ', $trimmed) ?? $trimmed);
-            if (isset($seen[$key])) {
-                continue;
-            }
-
-            $seen[$key] = true;
-            $deduped[] = $trimmed;
+            $output[] = $line;
+            $previousBlank = false;
         }
 
-        return implode(' ', $deduped);
+        return implode("\n", $output);
     }
 }
