@@ -353,6 +353,16 @@ let categoryImageChecked: Record<string, boolean> = $ref({});
 
 const services = $computed(() => generalModule.getServices || []);
 const assets = $computed(() => generalModule.getAssetsDir);
+const explicitCategoryImages: Record<string, string> = {
+  '3d visualisation': `${assets}/services/3D_Visualization.png`,
+  '3d visualization': `${assets}/services/3D_Visualization.png`,
+  'ar/vr visualisation': `${assets}/services/AR_VR_Visualization.png`,
+  'ar/vr visualization': `${assets}/services/AR_VR_Visualization.png`,
+  'geospatial visualisation': `${assets}/services/Geospacial_Visualization.png`,
+  'geospatial visualization': `${assets}/services/Geospacial_Visualization.png`,
+  'semantic enrichment': `${assets}/services/Semantic_Enrichement.png`,
+  'semantic enrichement': `${assets}/services/Semantic_Enrichement.png`,
+};
 const sectionClass = 'py-md mb-lg';
 const sidebarSectionClass = 'py-base pb-sm mb-md';
 const itemClass = 'border-b-base border-gray mb-md pb-md last:border-b-0 last:pb-none last:mb-none';
@@ -534,6 +544,15 @@ const resolveCategoryImage = async (category: string): Promise<void> => {
     ...categoryImageChecked,
     [category]: true,
   };
+
+  const explicitImage = explicitCategoryImages[normalizeText(category).toLowerCase()];
+  if (explicitImage) {
+    categoryImageMap = {
+      ...categoryImageMap,
+      [category]: explicitImage,
+    };
+    return;
+  }
 
   const candidates = categoryFilenameCandidates(category);
 

@@ -4,7 +4,7 @@
       <aside class="artemisia-shell__sidebar">
         <div class="artemisia-shell__title-wrap">
           <i class="fas fa-robot"></i>
-          <h2 class="artemisia-shell__title">ArtemisIA</h2>
+          <h2 class="artemisia-shell__title">Artemisia</h2>
         </div>
         <p class="artemisia-shell__subtitle">
           Your AI assistant for discovery. Pick a starter prompt or write your own question.
@@ -46,7 +46,7 @@
             <div
               v-for="item in selectedPreview"
               :key="`${item.type}-${item.id}`"
-              class="artemisia-context__chip"
+              :class="['artemisia-context__chip', getSelectedChipTypeClass(item)]"
             >
               <a
                 class="artemisia-context__chip-link"
@@ -91,11 +91,42 @@
             class="artemisia-msg"
             :class="message.role === 'user' ? 'artemisia-msg--user' : 'artemisia-msg--assistant'"
           >
-            {{ message.text }}
+            <template v-if="message.role === 'assistant'">
+              <div class="artemisia-msg__structured">
+                <div
+                  v-for="(section, sectionIndex) in parseAssistantMessage(message.text)"
+                  :key="`assistant-page-${message.id}-${sectionIndex}`"
+                  class="artemisia-msg__section"
+                >
+                  <p v-if="section.title" class="artemisia-msg__section-title">
+                    {{ section.title }}
+                  </p>
+                  <p
+                    v-for="(paragraph, paragraphIndex) in section.paragraphs"
+                    :key="`assistant-page-${message.id}-${sectionIndex}-p-${paragraphIndex}`"
+                    class="artemisia-msg__paragraph"
+                  >
+                    {{ paragraph }}
+                  </p>
+                  <ul v-if="section.bullets.length" class="artemisia-msg__bullets">
+                    <li
+                      v-for="(bullet, bulletIndex) in section.bullets"
+                      :key="`assistant-page-${message.id}-${sectionIndex}-b-${bulletIndex}`"
+                      class="artemisia-msg__bullet"
+                    >
+                      {{ bullet }}
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </template>
+            <template v-else>
+              {{ message.text }}
+            </template>
           </div>
 
           <div v-if="artemisIAModule.typing" class="artemisia-msg artemisia-msg--assistant">
-            ArtemisIA is typing...
+            Artemisia is typing...
           </div>
         </div>
 
@@ -105,7 +136,7 @@
             :value="artemisIAModule.draft"
             class="artemisia-shell__input"
             rows="2"
-            placeholder="Ask ArtemisIA to refine your search..."
+            placeholder="Ask Artemisia to refine your search..."
             @input="artemisIAModule.setDraft(($event.target as HTMLTextAreaElement).value)"
             @keydown.enter.exact.prevent="submit()"
           />
@@ -121,7 +152,7 @@
       <div class="artemisia-shell__header">
         <div class="artemisia-shell__title-wrap">
           <i class="fas fa-robot"></i>
-          <h2 class="artemisia-shell__title">ArtemisIA</h2>
+          <h2 class="artemisia-shell__title">Artemisia</h2>
         </div>
         <div class="artemisia-shell__header-actions">
           <button
@@ -147,7 +178,7 @@
           <div
             v-for="item in selectedPreview"
             :key="`${item.type}-${item.id}`"
-            class="artemisia-context__chip"
+            :class="['artemisia-context__chip', getSelectedChipTypeClass(item)]"
           >
             <a
               class="artemisia-context__chip-link"
@@ -184,11 +215,42 @@
           class="artemisia-msg"
           :class="message.role === 'user' ? 'artemisia-msg--user' : 'artemisia-msg--assistant'"
         >
-          {{ message.text }}
+          <template v-if="message.role === 'assistant'">
+            <div class="artemisia-msg__structured">
+              <div
+                v-for="(section, sectionIndex) in parseAssistantMessage(message.text)"
+                :key="`assistant-float-${message.id}-${sectionIndex}`"
+                class="artemisia-msg__section"
+              >
+                <p v-if="section.title" class="artemisia-msg__section-title">
+                  {{ section.title }}
+                </p>
+                <p
+                  v-for="(paragraph, paragraphIndex) in section.paragraphs"
+                  :key="`assistant-float-${message.id}-${sectionIndex}-p-${paragraphIndex}`"
+                  class="artemisia-msg__paragraph"
+                >
+                  {{ paragraph }}
+                </p>
+                <ul v-if="section.bullets.length" class="artemisia-msg__bullets">
+                  <li
+                    v-for="(bullet, bulletIndex) in section.bullets"
+                    :key="`assistant-float-${message.id}-${sectionIndex}-b-${bulletIndex}`"
+                    class="artemisia-msg__bullet"
+                  >
+                    {{ bullet }}
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </template>
+          <template v-else>
+            {{ message.text }}
+          </template>
         </div>
 
         <div v-if="artemisIAModule.typing" class="artemisia-msg artemisia-msg--assistant">
-          ArtemisIA is typing...
+          Artemisia is typing...
         </div>
       </div>
 
@@ -198,7 +260,7 @@
           :value="artemisIAModule.draft"
           class="artemisia-shell__input"
           rows="2"
-          placeholder="Ask ArtemisIA to refine your search..."
+          placeholder="Ask Artemisia to refine your search..."
           @input="artemisIAModule.setDraft(($event.target as HTMLTextAreaElement).value)"
           @keydown.enter.exact.prevent="submit()"
         />
@@ -218,6 +280,11 @@ import { artemisIAModule } from '@/store/modules';
 import { useRouter } from 'vue-router';
 
 type PromptCategoryKey = 'general' | 'spatial' | 'temporal';
+type AssistantMessageSection = {
+  title: string,
+  paragraphs: string[],
+  bullets: string[],
+};
 
 const props = defineProps<{
   mode?: 'page' | 'floating',
@@ -300,6 +367,81 @@ const submit = () => {
   textInputRef.value?.focus();
 };
 
+const stripInlineMarkdown = (value: string): string => {
+  return value
+    .replace(/^\s*#{1,6}\s+/, '')
+    .replace(/\*\*(.*?)\*\*/g, '$1')
+    .replace(/__(.*?)__/g, '$1')
+    .replace(/`([^`]+)`/g, '$1')
+    .trim();
+};
+
+const normalizeAssistantText = (text: string): string => {
+  return text
+    .replace(/\r\n/g, '\n')
+    .replace(/\s+(Key points:|Next step:|What this means:|Summary:|Overview:)/gi, '\n\n$1')
+    .replace(/([:;.!?])\s+(?=(?:[-*•]|\d+\.)\s)/g, '$1\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+};
+
+const parseAssistantMessage = (text: string): AssistantMessageSection[] => {
+  const normalized = normalizeAssistantText(text);
+  if (!normalized) {
+    return [];
+  }
+
+  return normalized
+    .split(/\n{2,}/)
+    .map((block): AssistantMessageSection | null => {
+      const lines = block
+        .split('\n')
+        .map((line) => line.trim())
+        .filter(Boolean);
+
+      if (!lines.length) {
+        return null;
+      }
+
+      let title = '';
+      const titleMatch = lines[0].match(/^(?:#{1,6}\s+)?([A-Za-z][\w\s]{1,60}):$/);
+      if (titleMatch) {
+        title = stripInlineMarkdown(titleMatch[1]);
+        lines.shift();
+      }
+
+      const paragraphs: string[] = [];
+      const bullets: string[] = [];
+
+      for (const line of lines) {
+        if (line === '---') {
+          continue;
+        }
+
+        const bulletMatch = line.match(/^(?:[-*•]|\d+\.)\s+(.+)$/);
+        if (bulletMatch) {
+          const bulletText = stripInlineMarkdown(bulletMatch[1]);
+          if (bulletText) {
+            bullets.push(bulletText);
+          }
+          continue;
+        }
+
+        const paragraphText = stripInlineMarkdown(line);
+        if (paragraphText) {
+          paragraphs.push(paragraphText);
+        }
+      }
+
+      if (!title && !paragraphs.length && !bullets.length) {
+        return null;
+      }
+
+      return { title, paragraphs, bullets };
+    })
+    .filter((section): section is AssistantMessageSection => section !== null);
+};
+
 const getSelectedRecordHref = (item: { id: string, type: string }) => {
   const basePath = String(process.env.ARIADNE_PUBLIC_PATH || '/');
   const normalizedBase = basePath.endsWith('/') ? basePath : `${basePath}/`;
@@ -308,6 +450,12 @@ const getSelectedRecordHref = (item: { id: string, type: string }) => {
     : `resource/${item.id}`;
 
   return `${normalizedBase}${routePath}`;
+};
+
+const getSelectedChipTypeClass = (item: { type?: string }) => {
+  return item?.type === 'heritage-entity'
+    ? 'artemisia-context__chip--heritage'
+    : 'artemisia-context__chip--resource';
 };
 
 const removeSelected = (item: any) => {

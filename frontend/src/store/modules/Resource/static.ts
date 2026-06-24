@@ -44,9 +44,6 @@ export const types = {
 export const validFromPaths = [
   { path: '/search', title: 'search results' },
   { path: '/publisher', title: 'publisher' },
-  { path: '/browse/where', title: 'browse where' },
-  { path: '/browse/when', title: 'browse when' },
-  { path: '/browse/what', title: 'browse what' },
 ];
 
 export const typesTemporary = {

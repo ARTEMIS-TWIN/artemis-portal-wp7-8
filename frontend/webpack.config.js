@@ -224,7 +224,7 @@ module.exports = env => {
 
     process.env.NODE_ENV = 'production';
 
-    ariadneApiPath = 'https://portal.ariadne-infrastructure.eu/api';
+    ariadneApiPath = '/api';
 
     config.mode = 'production';
     config.devtool = false;

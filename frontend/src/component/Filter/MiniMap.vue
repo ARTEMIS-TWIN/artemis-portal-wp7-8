@@ -371,7 +371,7 @@ const searchCurrentArea = async () => {
  * Redirect user to map view with current search criterias
  */
 const showResultInMapView = () => {
-  router.push({ path: '/browse/where', query: router.currentRoute.value.query });
+  router.push({ path: '/search', query: router.currentRoute.value.query });
 }
 
 // sets up map body - prepares mapObj with an L.map()

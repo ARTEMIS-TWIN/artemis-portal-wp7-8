@@ -12,10 +12,10 @@
       v-if="selectedCount"
       type="button"
       class="artemisia-suggestion mt-md"
-      @click="useArtemisIA()"
+      @click="useArtemisia()"
     >
       <i class="fas fa-robot mr-sm"></i>
-      Ask ArtemisIA with {{ selectedCount }} selected
+      Ask Artemisia with {{ selectedCount }} selected
     </button>
 
     <div v-if="activeFilters.length">
@@ -68,7 +68,7 @@ const removeFilter = (filter: heritageFilter) => {
   });
 };
 
-const useArtemisIA = () => {
+const useArtemisia = () => {
   artemisIAModule.useSelectionContext();
 };
 </script>

@@ -169,6 +169,10 @@ class GraphDbHeritageEntityImportServiceTest extends TestCase
                 return Http::response(['result' => 'created']);
             }
 
+            if (str_starts_with($request->url(), 'http://127.0.0.1:9200/artemis_heritage_entities/_mapping')) {
+                return Http::response(['acknowledged' => true]);
+            }
+
             return Http::response(status: 500);
         });
 
@@ -198,11 +202,81 @@ class GraphDbHeritageEntityImportServiceTest extends TestCase
                 && $payload['hasRelatedDataResources'] === true
                 && $payload['minPeriodFrom'] === -4000
                 && $payload['maxPeriodUntil'] === -700
+                && $payload['timelineFrom'] === -4000
+                && $payload['timelineUntil'] === -700
+                && $payload['timelineSource'] === 'chronology'
                 && $payload['periodLabels'] === ['Neolithic - England', 'Bronze Age - England']
                 && $payload['materials'] === ['sarsen', 'bluestone']
                 && count($payload['identifiers']) === 2
                 && $payload['visualRepresentations'][0]['uri'] === 'https://upload.wikimedia.org/wikipedia/commons/b/b0/Stonehenge_plan.jpg'
                 && $payload['relatedDataResources'][0]['id'] === $relatedResourceId;
+        });
+    }
+
+    public function test_it_derives_period_bounds_from_dating_label_when_numeric_bounds_are_missing(): void
+    {
+        Http::fake(function (Request $request) {
+            if (str_starts_with($request->url(), 'https://graphdb.ino.cnr.it/repositories/artemis-kb01')) {
+                $query = (string) ($request['query'] ?? '');
+
+                if (str_contains($query, 'SELECT DISTINCT ?entityUri')) {
+                    return Http::response([
+                        'head' => ['vars' => ['entityUri']],
+                        'results' => [
+                            'bindings' => [[
+                                'entityUri' => [
+                                    'type' => 'uri',
+                                    'value' => 'https://artemis-twin.eu/entity/TestEntity',
+                                ],
+                            ]],
+                        ],
+                    ]);
+                }
+
+                return Http::response([
+                    'head' => ['vars' => ['typeUri', 'period', 'periodLabel']],
+                    'results' => [
+                        'bindings' => [[
+                            'typeUri' => ['type' => 'uri', 'value' => 'https://www.artemis-twin.eu/ontology/rhdto/HC3_Tangible_Heritage'],
+                            'title' => ['type' => 'literal', 'value' => 'Test Entity'],
+                            'period' => ['type' => 'uri', 'value' => 'https://artemis-twin.eu/entity/Period_Test'],
+                            'periodLabel' => ['type' => 'literal', 'value' => 'Dating: -3200 to -1800'],
+                        ]],
+                    ],
+                ]);
+            }
+
+            if (str_starts_with($request->url(), 'http://127.0.0.1:9200/artemis_heritage_entities/_doc/')) {
+                return Http::response(['result' => 'created']);
+            }
+
+            if (str_starts_with($request->url(), 'http://127.0.0.1:9200/artemis_heritage_entities/_mapping')) {
+                return Http::response(['acknowledged' => true]);
+            }
+
+            if (str_starts_with($request->url(), 'http://127.0.0.1:9200/ariadne_portal/_search')) {
+                return Http::response(['hits' => ['hits' => []]]);
+            }
+
+            return Http::response(status: 200);
+        });
+
+        app(GraphDbHeritageEntityImportService::class)->importGraph(
+            'https://artemis-twin.eu/digitaltwins/test'
+        );
+
+        Http::assertSent(function (Request $request) {
+            if (! str_starts_with($request->url(), 'http://127.0.0.1:9200/artemis_heritage_entities/_doc/')) {
+                return false;
+            }
+
+            $payload = json_decode($request->body(), true);
+
+            return ($payload['minPeriodFrom'] ?? null) === -3200
+                && ($payload['maxPeriodUntil'] ?? null) === -1800
+                && ($payload['timelineFrom'] ?? null) === -3200
+                && ($payload['timelineUntil'] ?? null) === -1800
+                && ($payload['timelineSource'] ?? null) === 'dating';
         });
     }
 }

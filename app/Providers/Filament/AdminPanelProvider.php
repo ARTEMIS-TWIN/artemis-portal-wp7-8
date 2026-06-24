@@ -26,7 +26,7 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
-            ->brandName('ARIADNE Admin')
+            ->brandName('ARTEMIS Admin')
             ->login()
             ->colors([
                 'primary' => Color::Amber,

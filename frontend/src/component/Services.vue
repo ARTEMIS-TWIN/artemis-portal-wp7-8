@@ -430,6 +430,16 @@ const router = useRouter();
 const perPage = 10;
 
 const assets: string = $computed(() => generalModule.getAssetsDir);
+const explicitCategoryImages: Record<string, string> = {
+  '3d visualisation': `${assets}/services/3D_Visualization.png`,
+  '3d visualization': `${assets}/services/3D_Visualization.png`,
+  'ar/vr visualisation': `${assets}/services/AR_VR_Visualization.png`,
+  'ar/vr visualization': `${assets}/services/AR_VR_Visualization.png`,
+  'geospatial visualisation': `${assets}/services/Geospacial_Visualization.png`,
+  'geospatial visualization': `${assets}/services/Geospacial_Visualization.png`,
+  'semantic enrichment': `${assets}/services/Semantic_Enrichement.png`,
+  'semantic enrichement': `${assets}/services/Semantic_Enrichement.png`,
+};
 const services: Array<ServiceItem> = $computed(() => generalModule.getServices || []);
 const normalizedFilter = $computed(() => filter.toLowerCase().trim());
 const hasSearchQuery = $computed(() => normalizedFilter !== '');
@@ -909,6 +919,15 @@ const resolveCategoryImage = async (category: string): Promise<void> => {
     ...categoryImageChecked,
     [category]: true,
   };
+
+  const explicitImage = explicitCategoryImages[normalizeText(category).toLowerCase()];
+  if (explicitImage) {
+    categoryImageMap = {
+      ...categoryImageMap,
+      [category]: explicitImage,
+    };
+    return;
+  }
 
   const candidates = categoryFilenameCandidates(category);
 

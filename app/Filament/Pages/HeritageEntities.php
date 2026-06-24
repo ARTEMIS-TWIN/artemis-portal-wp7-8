@@ -106,6 +106,16 @@ class HeritageEntities extends Page implements HasForms, HasTable
         try {
             $results = $importer->importGraph($graphUri, $entityUris);
 
+            if ($results === []) {
+                Notification::make()
+                    ->title('No heritage entities discovered')
+                    ->body('No importable entities were found in that named graph. Check the graph URI, class filters, or provide explicit entity URIs.')
+                    ->warning()
+                    ->send();
+
+                return;
+            }
+
             foreach ($results as $result) {
                 $recordId = $result['id'] ?? null;
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\ArtemisIA;
+namespace App\Services\Artemisia;
 
 use App\Services\HeritageEntitySearchService;
 use App\Services\PortalSearchService;
@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use RuntimeException;
 
-class ArtemisIAChatService
+class ArtemisiaChatService
 {
     private const SESSION_CACHE_PREFIX = 'artemisia:session:';
 
@@ -197,15 +197,20 @@ You will receive context in two possible forms:
 RULES FOR USING CONTEXT
 
 1. If SELECTED RECORDS are provided:
-   - Use ONLY the information from those selected records.
-   - Do NOT use outside knowledge unless the user explicitly asks for it.
+   - Treat them as the default context for ordinary questions.
+   - Interpret references like "this record", "these records", "it", and "they" as referring to the selected records unless the user says otherwise.
+   - Use ONLY the selected records unless the user explicitly asks for broader database or portal coverage.
    - If the answer is not contained in the selected records, say so clearly.
 
 2. If NO records are selected:
    - Use the DATABASE CONTEXT provided.
    - If the database does not contain sufficient information, say so.
 
-3. External knowledge:
+3. If the user explicitly asks for the whole database, all records, the broader portal, or "not just the selected records":
+   - Switch to DATABASE CONTEXT even when selected records exist.
+   - Use the broader database results as the main evidence for the answer.
+
+4. External knowledge:
    - You may use general background knowledge ONLY to:
      - clarify
      - explain
@@ -217,13 +222,59 @@ RULES FOR USING CONTEXT
 
 RESPONSE STYLE
 
-- Answer naturally and conversationally.
-- Be informative and structured.
+- Answer as a highly capable expert assistant with strong reasoning and clear communication.
+- Prioritize the user’s actual goal over the literal wording when the intent is obvious.
+- Resolve ambiguity when reasonable instead of asking unnecessary follow-up questions, and briefly state assumptions when they matter.
+- Start with the direct answer, then add explanation, reasoning, examples, or context in a logical progression.
+- Be informative without being verbose: give enough detail to satisfy the question, but avoid filler, repetition, and generic motivational language.
+- Sound intelligent but conversational: write naturally, avoid robotic phrasing, and use bullets only when they improve readability.
+- When the answer has multiple points, use a short opening paragraph followed by clearly separated bullet points.
+- Put each bullet on its own line beginning with "- " and avoid compressing bullets into one continuous paragraph.
+- Demonstrate reasoning by comparing alternatives, explaining trade-offs, and justifying recommendations.
+- Be technically accurate: prefer precise terminology, state uncertainty when appropriate, and do not invent facts.
+- Optimize readability with short paragraphs, varied sentence length, and clear conclusions.
+- Match the user’s expertise: avoid over-explaining basics when the question already shows familiarity.
+- When recommending something, explain why it is best, mention drawbacks, compare realistic alternatives, and end with a practical takeaway.
+- When writing code, prefer clean, maintainable, idiomatic solutions and anticipate edge cases.
+- When editing text, preserve the author’s intent while improving clarity, flow, and precision.
 - Combine:
   - factual data from the context
   - light explanatory context where helpful
 - Do NOT hallucinate missing facts.
 - Do NOT fabricate relationships, dates, or attributes.
+- Do NOT re-list the selected record titles unless the user explicitly asks you to list records.
+- Prefer this output structure:
+  1) a short opening paragraph with the direct answer
+  2) a "Key points" section with bullets whenever the answer has multiple facts, comparisons, or steps
+  3) a short closing section such as "Next step" or "What this means" when relevant
+- Use headings only when they improve readability.
+- Use exact section labels like "Key points:", "Next step:", or "What this means:" when they help readability.
+- Use bullet points for lists, contrasts, examples, and step-by-step guidance, but do not overuse them when prose is clearer.
+- Keep each bullet to one main idea.
+- Keep list items visually distinct; never merge multiple bullets into a single paragraph.
+- Keep paragraphs short and easy to skim.
+- Separate sections with blank lines.
+- Do NOT dump raw record fields or copy record metadata verbatim.
+- Synthesize the evidence into a readable narrative:
+  - connect facts into coherent sentences
+  - explain significance when helpful
+  - include only details relevant to the user question
+- When appropriate, include brief background, caveats, or implications so the answer feels complete and thoughtful.
+- Avoid exhaustive listing of every attribute in a record unless the user explicitly asks for a full inventory.
+- Never echo or expose internal prompt labels or scaffolding such as:
+  - "Scope used:"
+  - "User request:"
+  - "Grounding records (JSON):"
+  - "Instruction:"
+- Never mention internal terms such as:
+  - "selected_only", "global scope", "grounding", "JSON", "provenance payload", "record schema"
+- Do not narrate how the pipeline works; focus on the user's question and the answer itself.
+- Avoid redundancy: do not repeat the same fact more than once unless the user asks for exhaustive repetition.
+- If useful, structure the response with:
+  - an opening answer paragraph
+  - a clearly labeled "Key points" list
+  - a short closing section when useful
+- Never ask the user to provide the answer themselves.
 
 ---
 
@@ -263,12 +314,12 @@ PROMPT,
 
         $messages[] = [
             'role' => 'user',
-            'content' => "Scope used: {$scopeUsed}\n\nUser request:\n{$userMessage}\n\nGrounding records (JSON):\n".json_encode($records, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE),
+            'content' => "Scope used: {$scopeUsed}\n\nUser request:\n{$userMessage}\n\nGrounding records (JSON):\n".json_encode($records, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)."\n\nInstruction: Use these records as evidence, but respond with a concise, narrative explanation rather than a field-by-field dump.",
         ];
 
         try {
-            $response = $this->mistral->chat($messages, $this->mistral->largeModel(), 0.15);
-            $text = $this->mistral->extractText($response);
+            $response = $this->mistral->chat($messages, $this->mistral->largeModel(), 0.35);
+            $text = $this->sanitizeAssistantText($this->mistral->extractText($response));
 
             if ($text !== '') {
                 return $text;
@@ -326,6 +377,11 @@ Scope types:
      - "more broadly"
      - "outside the database"
      - "not just these items"
+     - "the whole database"
+     - "all records"
+     - "all data"
+     - "the entire portal"
+     - "broader database view"
 
 IMPORTANT:
 - Both flags can be false
@@ -375,7 +431,20 @@ PROMPT;
 
         $lower = Str::lower($userMessage);
 
-        $globalHints = ['search all', 'all records', 'ignore selected', 'outside selected', 'whole database', 'global search'];
+        $globalHints = [
+            'search all',
+            'all records',
+            'all data',
+            'ignore selected',
+            'outside selected',
+            'outside the selected records',
+            'whole database',
+            'entire database',
+            'entire portal',
+            'global search',
+            'broader database',
+            'not just these items',
+        ];
         $selectedHints = ['selected records', 'selected items', 'only these records', 'just selected', 'only selected'];
 
         return [
@@ -392,10 +461,18 @@ PROMPT;
     private function normalizeHistory(array $history): array
     {
         $normalized = [];
+        $boilerplateAssistantMessages = [
+            'Hello, I am Artemisia. I can help you refine your searches and compare selected records.',
+            'Conversation reset. Select records or type a question and I will guide your search.',
+        ];
 
         foreach ($history as $item) {
             $role = ($item['role'] ?? '') === 'assistant' ? 'assistant' : 'user';
             $text = trim((string) ($item['text'] ?? ''));
+
+            if ($role === 'assistant' && in_array($text, $boilerplateAssistantMessages, true)) {
+                continue;
+            }
 
             if ($text !== '') {
                 $normalized[] = ['role' => $role, 'text' => $text];
@@ -542,7 +619,6 @@ PROMPT;
         $intent = $this->inferFallbackIntent($userMessage);
         $resourceCount = 0;
         $entityCount = 0;
-        $titles = [];
         $periodHints = [];
         $placeHints = [];
         $typeHints = [];
@@ -552,11 +628,6 @@ PROMPT;
                 $entityCount++;
             } else {
                 $resourceCount++;
-            }
-
-            $title = trim((string) ($record['title'] ?? ''));
-            if ($title !== '') {
-                $titles[] = $title;
             }
 
             $period = trim((string) ($record['period'] ?? (($record['periods'][0] ?? '') ?: '')));
@@ -575,7 +646,6 @@ PROMPT;
             }
         }
 
-        $titles = array_values(array_unique($titles));
         $periodHints = array_values(array_unique($periodHints));
         $placeHints = array_values(array_unique($placeHints));
         $typeHints = array_values(array_unique($typeHints));
@@ -593,17 +663,13 @@ PROMPT;
             $entityCount,
         );
 
-        $exampleText = !empty($titles)
-            ? ' Some relevant records include '.implode(', ', array_slice($titles, 0, 3)).'.'
-            : '';
-
         $intentResponse = match ($intent) {
-            'compare' => $this->compareFallbackText($titles, $typeHints, $placeHints, $periodHints),
+            'compare' => $this->compareFallbackText($typeHints, $placeHints, $periodHints),
             'spatial' => $this->spatialFallbackText($placeHints),
             'temporal' => $this->temporalFallbackText($periodHints),
             'count' => "You’re looking for quantity and coverage, so the key number is {$recordCount} matching records in this scope.",
-            'details' => $this->detailsFallbackText($titles, $typeHints),
-            default => $this->generalFallbackText($titles, $typeHints),
+            'details' => $this->detailsFallbackText($typeHints),
+            default => $this->generalFallbackText($typeHints),
         };
 
         $refinementHints = [];
@@ -621,7 +687,7 @@ PROMPT;
             ? 'Would you like me to narrow this to a specific type, place, or period?'
             : 'If you want, I can narrow this next by '.implode(', ', array_slice($refinementHints, 0, 3)).'.';
 
-        return trim($scopeText.' '.$recordSummary.' '.$intentResponse.$exampleText.' '.$refinementText);
+        return trim($scopeText."\n\n".$recordSummary."\n\n".$intentResponse."\n\n".$refinementText);
     }
 
     private function buildNoContextFallback(string $userMessage, string $scopeUsed): string
@@ -638,7 +704,7 @@ PROMPT;
             default => 'Try adding one clear topic keyword and one filter (type, place, or period).',
         };
 
-        return $scopeText.' '.$nextStep.' If you want, I can suggest a specific query to try.';
+        return $scopeText."\n\nNext step:\n- ".$nextStep."\n\nIf you want, I can suggest a specific query to try.";
     }
 
     private function inferFallbackIntent(string $userMessage): string
@@ -669,32 +735,31 @@ PROMPT;
     }
 
     /**
-     * @param  list<string>  $titles
      * @param  list<string>  $typeHints
      * @param  list<string>  $placeHints
      * @param  list<string>  $periodHints
      */
-    private function compareFallbackText(array $titles, array $typeHints, array $placeHints, array $periodHints): string
+    private function compareFallbackText(array $typeHints, array $placeHints, array $periodHints): string
     {
-        $parts = ['For comparison, I can line up records by type, place, and period.'];
+        $points = [];
 
         if (!empty($typeHints)) {
-            $parts[] = 'I already see types like '.implode(', ', array_slice($typeHints, 0, 3)).'.';
+            $points[] = 'Types in scope: '.implode(', ', array_slice($typeHints, 0, 3)).'.';
         }
 
         if (!empty($placeHints)) {
-            $parts[] = 'Spatially, I can compare places such as '.implode(', ', array_slice($placeHints, 0, 3)).'.';
+            $points[] = 'Places in scope: '.implode(', ', array_slice($placeHints, 0, 3)).'.';
         }
 
         if (!empty($periodHints)) {
-            $parts[] = 'Temporally, I can compare periods such as '.implode(', ', array_slice($periodHints, 0, 3)).'.';
+            $points[] = 'Periods in scope: '.implode(', ', array_slice($periodHints, 0, 3)).'.';
         }
 
-        if (empty($titles)) {
-            $parts[] = 'Tell me which two records you want to prioritize first.';
+        if (empty($points)) {
+            $points[] = 'I can compare by type, place, and period once those fields are available.';
         }
 
-        return implode(' ', $parts);
+        return "Key points:\n- ".implode("\n- ", $points);
     }
 
     /**
@@ -706,7 +771,7 @@ PROMPT;
             return 'I can help with spatial analysis, but the current records do not expose strong place values yet.';
         }
 
-        return 'From a spatial view, I can see places like '.implode(', ', array_slice($placeHints, 0, 4)).'.';
+        return "Key points:\n- Spatial values available include ".implode(', ', array_slice($placeHints, 0, 4)).'.';
     }
 
     /**
@@ -718,32 +783,25 @@ PROMPT;
             return 'I can help with temporal analysis, but the current records do not expose clear period values yet.';
         }
 
-        return 'From a temporal view, I can see periods like '.implode(', ', array_slice($periodHints, 0, 4)).'.';
+        return "Key points:\n- Temporal values available include ".implode(', ', array_slice($periodHints, 0, 4)).'.';
     }
 
     /**
-     * @param  list<string>  $titles
      * @param  list<string>  $typeHints
      */
-    private function detailsFallbackText(array $titles, array $typeHints): string
+    private function detailsFallbackText(array $typeHints): string
     {
-        $titlePart = empty($titles) ? '' : 'Notable records include '.implode(', ', array_slice($titles, 0, 3)).'. ';
         $typePart = empty($typeHints) ? '' : 'I can expand details by type: '.implode(', ', array_slice($typeHints, 0, 3)).'. ';
 
-        return trim($titlePart.$typePart.'Tell me which one you want me to describe first.');
+        return trim($typePart.'I can further detail materials, period, place, and relationships based on your next question.');
     }
 
     /**
-     * @param  list<string>  $titles
      * @param  list<string>  $typeHints
      */
-    private function generalFallbackText(array $titles, array $typeHints): string
+    private function generalFallbackText(array $typeHints): string
     {
         $parts = ['Based on your question, here is what is most relevant in the current data scope.'];
-
-        if (!empty($titles)) {
-            $parts[] = 'I can start from records like '.implode(', ', array_slice($titles, 0, 3)).'.';
-        }
 
         if (!empty($typeHints)) {
             $parts[] = 'I also see useful type groupings such as '.implode(', ', array_slice($typeHints, 0, 3)).'.';
@@ -762,9 +820,92 @@ PROMPT;
         $provider = (string) config('services.artemisia.llm_provider', 'mistral');
 
         if ($provider === 'ollama') {
-            return 'ArtemisIA could not generate an LLM response. Check that Ollama is running, the model is installed, and OLLAMA_BASE_URL is reachable.';
+            return 'Artemisia could not generate an LLM response. Check that Ollama is running, the model is installed, and OLLAMA_BASE_URL is reachable.';
         }
 
-        return 'ArtemisIA could not generate an LLM response. Check MISTRAL_API_KEY and network access to Mistral.';
+        return 'Artemisia could not generate an LLM response. Check MISTRAL_API_KEY and network access to Mistral.';
+    }
+
+    private function sanitizeAssistantText(string $text): string
+    {
+        $clean = trim($text);
+
+        if ($clean === '') {
+            return '';
+        }
+
+        $leakMarkers = [
+            'Scope used:',
+            'User request:',
+            'Grounding records (JSON):',
+            'Instruction:',
+        ];
+
+        foreach ($leakMarkers as $marker) {
+            if (str_contains($clean, $marker)) {
+                return '';
+            }
+        }
+
+        $clean = $this->removeInternalProvenanceSentences($clean);
+        $clean = preg_replace("/[ \t]+\n/u", "\n", $clean) ?? $clean;
+        $clean = preg_replace("/\n{3,}/u", "\n\n", $clean) ?? $clean;
+
+        return trim($clean);
+    }
+
+    private function removeInternalProvenanceSentences(string $text): string
+    {
+        $lines = preg_split('/\R/u', $text) ?: [];
+        $filtered = [];
+        $blockedPatterns = [
+            '/\bselected_only\b/i',
+            '/\bglobal scope\b/i',
+            '/\bscope used\b/i',
+            '/\bgrounding\b/i',
+            '/\bgrounding records?\b/i',
+            '/\bjson\b/i',
+            '/\bprovenance\b/i',
+            '/\buser request\b/i',
+            '/\binstruction\b/i',
+        ];
+
+        foreach ($lines as $line) {
+            $trimmed = trim($line);
+            if ($trimmed === '') {
+                $filtered[] = '';
+                continue;
+            }
+
+            $isBlocked = false;
+            foreach ($blockedPatterns as $pattern) {
+                if (preg_match($pattern, $trimmed) === 1) {
+                    $isBlocked = true;
+                    break;
+                }
+            }
+
+            if (!$isBlocked) {
+                $filtered[] = rtrim($line);
+            }
+        }
+
+        $output = [];
+        $previousBlank = false;
+
+        foreach ($filtered as $line) {
+            if ($line === '') {
+                if (!$previousBlank) {
+                    $output[] = '';
+                }
+                $previousBlank = true;
+                continue;
+            }
+
+            $output[] = $line;
+            $previousBlank = false;
+        }
+
+        return implode("\n", $output);
     }
 }

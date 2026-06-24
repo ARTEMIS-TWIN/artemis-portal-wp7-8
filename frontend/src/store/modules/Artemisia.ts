@@ -1,34 +1,34 @@
 import axios from 'axios';
 
-type ArtemisIARecord = {
+type ArtemisiaRecord = {
   id: string,
   title: string,
   type: 'data-resource' | 'heritage-entity',
   subtitle?: string,
 };
 
-type ArtemisIAMessage = {
+type ArtemisiaMessage = {
   id: number,
   role: 'assistant' | 'user',
   text: string,
   ts: number,
 };
 
-export class ArtemisIAModule {
+export class ArtemisiaModule {
   panelOpen: boolean = false;
   draft: string = '';
   sessionId: string = this.createSessionId();
   lastScopeUsed: 'selected_only' | 'global' | '' = '';
-  messages: ArtemisIAMessage[] = [
+  messages: ArtemisiaMessage[] = [
     {
       id: 1,
       role: 'assistant',
-      text: 'Hello, I am ArtemisIA. I can help you refine your searches and compare selected records.',
+      text: 'Hello, I am Artemisia. I can help you refine your searches and compare selected records.',
       ts: Date.now(),
     },
   ];
-  selectedDataResources: ArtemisIARecord[] = [];
-  selectedHeritageEntities: ArtemisIARecord[] = [];
+  selectedDataResources: ArtemisiaRecord[] = [];
+  selectedHeritageEntities: ArtemisiaRecord[] = [];
   nextMessageId: number = 2;
   typing: boolean = false;
 
@@ -70,11 +70,11 @@ export class ArtemisIAModule {
     ];
   }
 
-  toggleDataResource(record: ArtemisIARecord) {
+  toggleDataResource(record: ArtemisiaRecord) {
     this.toggleRecord(record, this.selectedDataResources);
   }
 
-  toggleHeritageEntity(record: ArtemisIARecord) {
+  toggleHeritageEntity(record: ArtemisiaRecord) {
     this.toggleRecord(record, this.selectedHeritageEntities);
   }
 
@@ -153,7 +153,7 @@ export class ArtemisIAModule {
       this.messages.push({
         id: this.nextMessageId++,
         role: 'assistant',
-        text: backendMessage || 'ArtemisIA is temporarily unavailable. Please check configuration and try again.',
+        text: backendMessage || 'Artemisia is temporarily unavailable. Please check configuration and try again.',
         ts: Date.now(),
       });
     } finally {
@@ -161,7 +161,7 @@ export class ArtemisIAModule {
     }
   }
 
-  private toggleRecord(record: ArtemisIARecord, target: ArtemisIARecord[]) {
+  private toggleRecord(record: ArtemisiaRecord, target: ArtemisiaRecord[]) {
     const id = String(record?.id || '').trim();
     if (!id) {
       return;
@@ -197,7 +197,7 @@ export class ArtemisIAModule {
     return `Use my selected records context (${ dataCount } data resources, ${ heritageCount } heritage entities) and suggest better filters and next queries.`;
   }
 
-  get allSelected(): ArtemisIARecord[] {
+  get allSelected(): ArtemisiaRecord[] {
     return [...this.selectedDataResources, ...this.selectedHeritageEntities];
   }
 

@@ -33,7 +33,7 @@
 
             <button
               class="bg-white px-md py-sm text-center text-sm text-blue cursor-pointer hover:bg-lightGray transition-color duration-300 border-base border-gray rounded-xl"
-              @click="navigateToRange('/browse/when')"
+              @click="navigateToRange('/search')"
             >
               Advanced Search
             </button>

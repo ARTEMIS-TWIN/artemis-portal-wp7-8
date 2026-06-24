@@ -3,15 +3,15 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Services\ArtemisIA\ArtemisIAChatService;
+use App\Services\Artemisia\ArtemisiaChatService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use RuntimeException;
 
-class ArtemisIAApiController extends Controller
+class ArtemisiaApiController extends Controller
 {
     public function __construct(
-        private readonly ArtemisIAChatService $chatService,
+        private readonly ArtemisiaChatService $chatService,
     ) {
     }
 
@@ -47,4 +47,3 @@ class ArtemisIAApiController extends Controller
         return response()->json($result);
     }
 }
-
