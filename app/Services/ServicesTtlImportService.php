@@ -672,18 +672,35 @@ class ServicesTtlImportService
         return 'Digital Services';
     }
 
-    private function resolveUrl(string $serviceUri, ?string $providerHomepage): ?string
-    {
-        if (filter_var($serviceUri, FILTER_VALIDATE_URL)) {
-            return $serviceUri;
-        }
+ 
+private function resolveUrl(string $serviceUri, ?string $providerHomepage): ?string
+{
+    // Swagger documentation links for selected ARTEMIS services
+    $swaggerUrls = [
+        892243222 => 'https://artemis-twin.github.io/artemis-metis-api/',
+        15780425 => 'https://artemis-twin.github.io/artemis-simulation-climatechange-api/',
+        779382166 => 'https://artemis-twin.github.io/artemis-iot-api/',
+        2474942505 => 'https://artemis-twin.github.io/artemis-arvr-annotation-api/',
+        3886524932 => 'https://artemis-twin.github.io/artemis-arvr-annotation-api/',
+    ];
 
-        if (is_string($providerHomepage) && filter_var($providerHomepage, FILTER_VALIDATE_URL)) {
-            return $providerHomepage;
-        }
+    $serviceId = $this->sortableId($serviceUri);
 
-        return null;
+    if (isset($swaggerUrls[$serviceId])) {
+        return $swaggerUrls[$serviceId];
     }
+
+    if (filter_var($serviceUri, FILTER_VALIDATE_URL)) {
+        return $serviceUri;
+    }
+
+    if (is_string($providerHomepage) && filter_var($providerHomepage, FILTER_VALIDATE_URL)) {
+        return $providerHomepage;
+    }
+
+    return null;
+}
+
 
     private function nodeLabel(array $graph, string $uri): ?string
     {
